@@ -87,7 +87,25 @@ Perfect for:
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
-> **macOS Users:** Choose the correct architecture (M1/M2/M3 = `arm64`, Intel = `x64`). See [FAQ](#-faq--troubleshooting) for security warnings.
+### macOS Installation Notes
+
+**⚠️ Important: Choose the Correct Architecture**
+- **Apple Silicon** (M1/M2/M3/M4): Download `arm64` version
+- **Intel Mac**: Download `x64` version
+- Using the wrong version will cause session creation to fail
+
+**🔓 Fix Security Warnings**
+
+Since the app is not code-signed, macOS will show security warnings:
+
+**If you see "app is damaged and can't be opened":**
+```bash
+xattr -cr /Applications/CouchCode.app
+```
+
+**If you see "unidentified developer":**
+1. Open **System Preferences** → **Security & Privacy**
+2. Click **Open Anyway** next to the CouchCode message
 
 ### Build From Source
 
