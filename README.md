@@ -68,11 +68,11 @@ Perfect for:
 
 | Platform | Download | Size |
 |----------|----------|------|
-| **macOS (Apple Silicon)** | [CouchCode-1.1.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.1.0/CouchCode-1.1.0-mac-arm64.dmg) | 92 MB |
-| **macOS (Intel)** | [CouchCode-1.1.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.1.0/CouchCode-1.1.0-mac-x64.dmg) | 97 MB |
-| **Windows (64-bit)** | [CouchCode-1.1.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.1.0/CouchCode-1.1.0-win-x64.exe) | 77 MB |
-| **Linux (Universal)** | [CouchCode-1.1.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.1.0/CouchCode-1.1.0-linux-x86_64.AppImage) | 102 MB |
-| **Linux (Debian/Ubuntu)** | [CouchCode-1.1.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.1.0/CouchCode-1.1.0-linux-amd64.deb) | 71 MB |
+| **macOS (Apple Silicon)** | [CouchCode-1.2.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-mac-arm64.dmg) | 92 MB |
+| **macOS (Intel)** | [CouchCode-1.2.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-mac-x64.dmg) | 97 MB |
+| **Windows (64-bit)** | [CouchCode-1.2.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-win-x64.exe) | 77 MB |
+| **Linux (Universal)** | [CouchCode-1.2.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-x86_64.AppImage) | 107 MB |
+| **Linux (Debian/Ubuntu)** | [CouchCode-1.2.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-amd64.deb) | 74 MB |
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
