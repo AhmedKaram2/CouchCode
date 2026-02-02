@@ -158,49 +158,105 @@
       </div>
     </div>
 
-    <!-- Vibe-Claude Quick Commands (Optional) -->
+    <!-- Claude Code Quick Commands -->
     <div class="vibe-claude-bar hidden" id="vibe-claude-bar">
       <div class="vibe-header">
-        <span class="vibe-title">Vibe-Claude</span>
-        <button class="vibe-toggle-btn" id="vibe-toggle-btn" title="Hide Vibe-Claude">
+        <span class="vibe-title">Claude Commands</span>
+        <button class="vibe-toggle-btn" id="vibe-toggle-btn" title="Hide Commands">
           <svg viewBox="0 0 24 24" width="16" height="16">
             <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
           </svg>
         </button>
       </div>
-      <div class="vibe-commands">
-        <button class="vibe-cmd" data-cmd="/vibe " title="Start a vibe task">
-          <span class="cmd-icon">🚀</span>
-          <span class="cmd-label">/vibe</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-status" title="Check task status">
-          <span class="cmd-icon">📊</span>
-          <span class="cmd-label">/v-status</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-plan " title="Plan a task">
-          <span class="cmd-icon">📋</span>
-          <span class="cmd-label">/v-plan</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-continue" title="Continue current task">
-          <span class="cmd-icon">▶️</span>
-          <span class="cmd-label">/v-continue</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-compress" title="Compress session">
-          <span class="cmd-icon">🗜️</span>
-          <span class="cmd-label">/v-compress</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-checkpoint " title="Save checkpoint">
-          <span class="cmd-icon">💾</span>
-          <span class="cmd-label">/v-checkpoint</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-memory" title="View AI memory">
-          <span class="cmd-icon">🧠</span>
-          <span class="cmd-label">/v-memory</span>
-        </button>
-        <button class="vibe-cmd" data-cmd="/v-help" title="Show help">
-          <span class="cmd-icon">❓</span>
-          <span class="cmd-label">/v-help</span>
-        </button>
+      <div class="vibe-commands-scroll">
+        <!-- Session Commands -->
+        <div class="vibe-cmd-group">
+          <span class="cmd-group-label">Session</span>
+          <div class="vibe-commands">
+            <button class="vibe-cmd" data-cmd="claude " title="Start Claude with prompt">
+              <span class="cmd-icon">🤖</span>
+              <span class="cmd-label">claude</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/compact" title="Compact conversation history">
+              <span class="cmd-icon">🗜️</span>
+              <span class="cmd-label">/compact</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/clear" title="Clear conversation">
+              <span class="cmd-icon">🧹</span>
+              <span class="cmd-label">/clear</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/cost" title="Show token usage & cost">
+              <span class="cmd-icon">💰</span>
+              <span class="cmd-label">/cost</span>
+            </button>
+          </div>
+        </div>
+        <!-- Action Commands -->
+        <div class="vibe-cmd-group">
+          <span class="cmd-group-label">Actions</span>
+          <div class="vibe-commands">
+            <button class="vibe-cmd vibe-cmd-yes" data-cmd="y\r" title="Yes/Confirm">
+              <span class="cmd-icon">✓</span>
+              <span class="cmd-label">Yes</span>
+            </button>
+            <button class="vibe-cmd vibe-cmd-no" data-cmd="n\r" title="No/Decline">
+              <span class="cmd-icon">✗</span>
+              <span class="cmd-label">No</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/resume" title="Resume last session">
+              <span class="cmd-icon">▶️</span>
+              <span class="cmd-label">/resume</span>
+            </button>
+            <button class="vibe-cmd vibe-cmd-danger" data-cmd="\x03" title="Cancel/Interrupt">
+              <span class="cmd-icon">⛔</span>
+              <span class="cmd-label">Cancel</span>
+            </button>
+          </div>
+        </div>
+        <!-- Config Commands -->
+        <div class="vibe-cmd-group">
+          <span class="cmd-group-label">Config</span>
+          <div class="vibe-commands">
+            <button class="vibe-cmd" data-cmd="/config" title="Open configuration">
+              <span class="cmd-icon">⚙️</span>
+              <span class="cmd-label">/config</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/model" title="Change AI model">
+              <span class="cmd-icon">🧠</span>
+              <span class="cmd-label">/model</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/help" title="Show help">
+              <span class="cmd-icon">❓</span>
+              <span class="cmd-label">/help</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/doctor" title="Run diagnostics">
+              <span class="cmd-icon">🩺</span>
+              <span class="cmd-label">/doctor</span>
+            </button>
+          </div>
+        </div>
+        <!-- Task Commands -->
+        <div class="vibe-cmd-group">
+          <span class="cmd-group-label">Tasks</span>
+          <div class="vibe-commands">
+            <button class="vibe-cmd" data-cmd="/init" title="Initialize project">
+              <span class="cmd-icon">📦</span>
+              <span class="cmd-label">/init</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/add-dir " title="Add directory to context">
+              <span class="cmd-icon">📁</span>
+              <span class="cmd-label">/add-dir</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/review" title="Review changes">
+              <span class="cmd-icon">👀</span>
+              <span class="cmd-label">/review</span>
+            </button>
+            <button class="vibe-cmd" data-cmd="/commit" title="Commit changes">
+              <span class="cmd-icon">💾</span>
+              <span class="cmd-label">/commit</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

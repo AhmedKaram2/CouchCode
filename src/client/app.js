@@ -1793,6 +1793,25 @@ class TerminalRemoteApp {
       return;
     }
 
+    // Handle special escape sequences
+    if (cmd.includes('\\x')) {
+      // Convert escape sequences like \x03 to actual characters
+      const parsed = cmd.replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) =>
+        String.fromCharCode(parseInt(hex, 16))
+      );
+      this.sendInput(parsed);
+      this.vibrate();
+      return;
+    }
+
+    // Handle commands with \r (already includes enter)
+    if (cmd.includes('\\r')) {
+      const parsed = cmd.replace(/\\r/g, '\r');
+      this.sendInput(parsed);
+      this.vibrate();
+      return;
+    }
+
     // If command ends with space, put it in input for user to complete
     if (cmd.endsWith(' ')) {
       if (this.commandInput) {
