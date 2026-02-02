@@ -66,14 +66,14 @@ Perfect for:
 
 ### Download Installer
 
-| Platform | Download | Type |
+| Platform | Download | Size |
 |----------|----------|------|
-| **Windows** | [Download .exe](../../releases/latest) | NSIS Installer |
-| **macOS (Intel)** | [Download .dmg](../../releases/latest) | Disk Image |
-| **macOS (Apple Silicon)** | [Download .dmg](../../releases/latest) | Disk Image |
-| **Linux** | [Download .AppImage](../../releases/latest) | Universal |
-| **Linux (Debian/Ubuntu)** | [Download .deb](../../releases/latest) | Debian Package |
-| **Linux (Fedora/RHEL)** | [Download .rpm](../../releases/latest) | RPM Package |
+| **Windows (64-bit)** | [CouchCode-1.0.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.0.0/CouchCode-1.0.0-win-x64.exe) | 77 MB |
+| **macOS (Intel)** | [CouchCode-1.0.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.0.0/CouchCode-1.0.0-mac-x64.dmg) | 97 MB |
+| **Linux (Universal)** | [CouchCode-1.0.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.0.0/CouchCode-1.0.0-linux-x86_64.AppImage) | 102 MB |
+| **Linux (Debian/Ubuntu)** | [CouchCode-1.0.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.0.0/CouchCode-1.0.0-linux-amd64.deb) | 71 MB |
+
+> **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
 ### Build From Source
 
