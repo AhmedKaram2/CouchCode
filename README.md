@@ -78,9 +78,10 @@ Perfect for:
 |----------|----------|------|
 | **macOS (Apple Silicon)** | [CouchCode-1.3.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-arm64.dmg) | 93 MB |
 | **macOS (Intel)** | [CouchCode-1.3.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-x64.dmg) | 99 MB |
-| **Windows (64-bit)** | [CouchCode-1.2.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-win-x64.exe) | 77 MB |
-| **Linux (Universal)** | [CouchCode-1.2.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-x86_64.AppImage) | 107 MB |
-| **Linux (Debian/Ubuntu)** | [CouchCode-1.2.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-amd64.deb) | 74 MB |
+| **Windows (64-bit)** | [CouchCode-1.3.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-win-x64.exe) | 77 MB |
+| **Windows (32-bit)** | [CouchCode-1.3.0-win-ia32.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-win-ia32.exe) | 68 MB |
+| **Linux (Universal)** | [CouchCode-1.3.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-linux-x86_64.AppImage) | 102 MB |
+| **Linux (Debian/Ubuntu)** | [CouchCode-1.3.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-linux-amd64.deb) | 71 MB |
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
