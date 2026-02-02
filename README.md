@@ -35,6 +35,8 @@ Perfect for:
 
 ## ✨ Features
 
+> **🎉 New in v1.3.0:** Universal CLI tool support! All user-installed CLI tools (Claude, pipx, cargo, etc.) now work automatically across all platforms. [See what's new →](#-universal-cli-tool-support-new-in-v130)
+
 ### 🌐 Remote Access
 - **Browser-Based** - No app installation needed on client devices
 - **PWA Support** - Install as a native-like app on your phone
@@ -57,6 +59,12 @@ Perfect for:
 - **macOS** - Zsh, Bash, Fish
 - **Linux** - All major shells supported
 
+### 🔧 Universal CLI Tool Support (NEW in v1.3.0)
+- **Login Shell Initialization** - All shells load user profiles automatically
+- **Enhanced PATH** - Automatically includes `~/.local/bin`, Homebrew, Cargo, npm global, and more
+- **Works Out-of-the-Box** - Claude CLI, pipx, and other user-installed tools just work
+- **Cross-Platform** - Consistent behavior across Windows, macOS, and Linux
+
 ### 🤖 AI Integration
 - **Vibe-Kanban** - Split view with task management board
 - **Vibe-Claude** - Quick command buttons for AI coding agents
@@ -68,8 +76,8 @@ Perfect for:
 
 | Platform | Download | Size |
 |----------|----------|------|
-| **macOS (Apple Silicon)** | [CouchCode-1.2.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-mac-arm64.dmg) | 92 MB |
-| **macOS (Intel)** | [CouchCode-1.2.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-mac-x64.dmg) | 97 MB |
+| **macOS (Apple Silicon)** | [CouchCode-1.3.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-arm64.dmg) | 93 MB |
+| **macOS (Intel)** | [CouchCode-1.3.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-x64.dmg) | 99 MB |
 | **Windows (64-bit)** | [CouchCode-1.2.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-win-x64.exe) | 77 MB |
 | **Linux (Universal)** | [CouchCode-1.2.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-x86_64.AppImage) | 107 MB |
 | **Linux (Debian/Ubuntu)** | [CouchCode-1.2.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.2.0/CouchCode-1.2.0-linux-amd64.deb) | 74 MB |
