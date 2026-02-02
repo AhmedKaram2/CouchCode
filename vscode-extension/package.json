@@ -1,0 +1,142 @@
+{
+  "name": "couchcode-vscode",
+  "displayName": "CouchCode",
+  "description": "Remote terminal access directly in VSCode - control your terminal from anywhere",
+  "version": "1.0.0",
+  "publisher": "ahmedkaram",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "terminal",
+    "remote",
+    "mobile",
+    "ssh",
+    "couch code"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "couchcode.openPanel",
+        "title": "CouchCode: Open Remote Terminal Panel",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "couchcode.connect",
+        "title": "CouchCode: Connect to Server",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "couchcode.disconnect",
+        "title": "CouchCode: Disconnect",
+        "icon": "$(debug-disconnect)"
+      },
+      {
+        "command": "couchcode.showQR",
+        "title": "CouchCode: Show QR Code for Mobile Connection",
+        "icon": "$(device-mobile)"
+      },
+      {
+        "command": "couchcode.createTerminal",
+        "title": "CouchCode: Create New Terminal",
+        "icon": "$(add)"
+      },
+      {
+        "command": "couchcode.refreshSessions",
+        "title": "CouchCode: Refresh Sessions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "couchcode.openInBrowser",
+        "title": "CouchCode: Open in Browser",
+        "icon": "$(browser)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "couchcode.createTerminal",
+          "when": "view == couchcode-sessions",
+          "group": "navigation"
+        },
+        {
+          "command": "couchcode.refreshSessions",
+          "when": "view == couchcode-sessions",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "couchcode.selectSession",
+          "when": "view == couchcode-sessions && viewItem == session"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "couchcode-sidebar",
+          "title": "CouchCode",
+          "icon": "$(terminal)"
+        }
+      ]
+    },
+    "views": {
+      "couchcode-sidebar": [
+        {
+          "id": "couchcode-sessions",
+          "name": "Terminal Sessions"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "CouchCode",
+      "properties": {
+        "couchcode.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3847",
+          "description": "CouchCode server URL"
+        },
+        "couchcode.autoConnect": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect to server on startup"
+        },
+        "couchcode.pin": {
+          "type": "string",
+          "default": "",
+          "description": "PIN for authentication (leave empty to be prompted)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.50.0"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedKaram2/CouchCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AhmedKaram2/CouchCode/issues"
+  },
+  "license": "MIT"
+}

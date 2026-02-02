@@ -70,6 +70,15 @@ Perfect for:
 - **Vibe-Claude** - Quick command buttons for AI coding agents
 - **Claude Code Ready** - Perfect companion for AI pair programming
 
+### 🔌 IDE Integration (NEW!)
+- **VSCode Extension** - Access CouchCode directly in Visual Studio Code
+- **Embedded Terminal Panel** - No need to switch between applications
+- **Session Management Sidebar** - Manage all terminal sessions from VSCode
+- **Status Bar Integration** - Quick access to CouchCode controls
+- **Command Palette** - Full control via keyboard shortcuts
+
+> **Install the VSCode Extension:** Search for "CouchCode" in the VSCode Extensions Marketplace or [install from folder](vscode-extension/)
+
 ## 📦 Installation
 
 ### Download Installer
