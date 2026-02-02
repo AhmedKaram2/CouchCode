@@ -1005,3 +1005,129 @@ body {
 .modal-btn.primary:active {
   transform: scale(0.98);
 }
+
+/* ==================== SETTINGS SECTIONS ==================== */
+.setting-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.setting-section h4 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+/* Font Size Control */
+.font-size-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.font-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.font-btn:hover {
+  background: var(--border-color);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.font-btn:active {
+  transform: scale(0.95);
+  background: var(--primary-color);
+  color: white;
+}
+
+#font-size-display {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Theme Selector */
+.theme-selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.theme-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: var(--background);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.theme-btn:hover {
+  border-color: var(--text-secondary);
+  background: var(--surface-light);
+}
+
+.theme-btn.active {
+  border-color: var(--primary-color);
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--text-primary);
+}
+
+.theme-preview {
+  width: 32px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.dark-preview {
+  background: linear-gradient(135deg, #0d1117 50%, #21262d 50%);
+}
+
+.light-preview {
+  background: linear-gradient(135deg, #ffffff 50%, #f6f8fa 50%);
+  border: 1px solid var(--border-color);
+}
+
+.monokai-preview {
+  background: linear-gradient(135deg, #272822 50%, #3e3d32 50%);
+}
+
+.dracula-preview {
+  background: linear-gradient(135deg, #282a36 50%, #44475a 50%);
+}
+
+.theme-btn span:last-child {
+  font-size: 0.6875rem;
+  font-weight: 500;
+}

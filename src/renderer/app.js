@@ -43,6 +43,106 @@ let currentSessionId = null;
 let sessions = [];
 let autoEnter = true; // Default ON
 
+// Terminal settings
+let fontSize = parseInt(localStorage.getItem('desktop-font-size') || '15');
+let currentTheme = localStorage.getItem('desktop-theme') || 'dark';
+
+// Theme definitions
+const themes = {
+  dark: {
+    background: '#0d1117',
+    foreground: '#f0f6fc',
+    cursor: '#58a6ff',
+    cursorAccent: '#0d1117',
+    selection: 'rgba(56, 139, 253, 0.3)',
+    black: '#484f58',
+    red: '#ff7b72',
+    green: '#3fb950',
+    yellow: '#d29922',
+    blue: '#58a6ff',
+    magenta: '#bc8cff',
+    cyan: '#39c5cf',
+    white: '#b1bac4',
+    brightBlack: '#6e7681',
+    brightRed: '#ffa198',
+    brightGreen: '#56d364',
+    brightYellow: '#e3b341',
+    brightBlue: '#79c0ff',
+    brightMagenta: '#d2a8ff',
+    brightCyan: '#56d4dd',
+    brightWhite: '#f0f6fc'
+  },
+  light: {
+    background: '#ffffff',
+    foreground: '#24292f',
+    cursor: '#0969da',
+    cursorAccent: '#ffffff',
+    selection: 'rgba(9, 105, 218, 0.2)',
+    black: '#24292f',
+    red: '#cf222e',
+    green: '#1a7f37',
+    yellow: '#9a6700',
+    blue: '#0969da',
+    magenta: '#8250df',
+    cyan: '#1b7c83',
+    white: '#6e7781',
+    brightBlack: '#57606a',
+    brightRed: '#a40e26',
+    brightGreen: '#2da44e',
+    brightYellow: '#bf8700',
+    brightBlue: '#218bff',
+    brightMagenta: '#a475f9',
+    brightCyan: '#3192aa',
+    brightWhite: '#8c959f'
+  },
+  monokai: {
+    background: '#272822',
+    foreground: '#f8f8f2',
+    cursor: '#f8f8f0',
+    cursorAccent: '#272822',
+    selection: 'rgba(73, 72, 62, 0.8)',
+    black: '#272822',
+    red: '#f92672',
+    green: '#a6e22e',
+    yellow: '#f4bf75',
+    blue: '#66d9ef',
+    magenta: '#ae81ff',
+    cyan: '#a1efe4',
+    white: '#f8f8f2',
+    brightBlack: '#75715e',
+    brightRed: '#f92672',
+    brightGreen: '#a6e22e',
+    brightYellow: '#f4bf75',
+    brightBlue: '#66d9ef',
+    brightMagenta: '#ae81ff',
+    brightCyan: '#a1efe4',
+    brightWhite: '#f9f8f5'
+  },
+  dracula: {
+    background: '#282a36',
+    foreground: '#f8f8f2',
+    cursor: '#f8f8f2',
+    cursorAccent: '#282a36',
+    selection: 'rgba(68, 71, 90, 0.8)',
+    black: '#21222c',
+    red: '#ff5555',
+    green: '#50fa7b',
+    yellow: '#f1fa8c',
+    blue: '#bd93f9',
+    magenta: '#ff79c6',
+    cyan: '#8be9fd',
+    white: '#f8f8f2',
+    brightBlack: '#6272a4',
+    brightRed: '#ff6e6e',
+    brightGreen: '#69ff94',
+    brightYellow: '#ffffa5',
+    brightBlue: '#d6acff',
+    brightMagenta: '#ff92df',
+    brightCyan: '#a4ffff',
+    brightWhite: '#ffffff'
+  }
+};
+
 // DOM Elements
 const statusBadge = document.getElementById('status-badge');
 const statusText = document.getElementById('status-text');
@@ -86,6 +186,12 @@ const claudeCancelBtn = document.getElementById('claude-cancel-btn');
 const claudeStartBtn = document.getElementById('claude-start-btn');
 let selectedClaudePrompt = null;
 
+// Terminal settings elements
+const fontDecrease = document.getElementById('font-decrease');
+const fontIncrease = document.getElementById('font-increase');
+const fontSizeDisplay = document.getElementById('font-size-display');
+const themeSelector = document.getElementById('theme-selector');
+
 // Initialize
 async function init() {
   await loadSettings();
@@ -94,6 +200,7 @@ async function init() {
   await loadSessions();
   initTerminal();
   setupEventListeners();
+  updateSettingsUI();
 
   // Poll for updates
   setInterval(async () => {
@@ -107,7 +214,7 @@ function initTerminal() {
   terminal = new Terminal({
     cursorBlink: true,
     cursorStyle: 'bar',
-    fontSize: 15,
+    fontSize: fontSize,
     fontFamily: 'Menlo, Monaco, "Cascadia Code", "Fira Code", "Courier New", monospace',
     fontWeight: '400',
     fontWeightBold: '600',
@@ -118,29 +225,7 @@ function initTerminal() {
     fastScrollModifier: 'alt',
     fastScrollSensitivity: 5,
     scrollSensitivity: 3,
-    theme: {
-      background: '#0d1117',
-      foreground: '#f0f6fc',
-      cursor: '#58a6ff',
-      cursorAccent: '#0d1117',
-      selection: 'rgba(56, 139, 253, 0.3)',
-      black: '#484f58',
-      red: '#ff7b72',
-      green: '#3fb950',
-      yellow: '#d29922',
-      blue: '#58a6ff',
-      magenta: '#bc8cff',
-      cyan: '#39c5cf',
-      white: '#b1bac4',
-      brightBlack: '#6e7681',
-      brightRed: '#ffa198',
-      brightGreen: '#56d364',
-      brightYellow: '#e3b341',
-      brightBlue: '#79c0ff',
-      brightMagenta: '#d2a8ff',
-      brightCyan: '#56d4dd',
-      brightWhite: '#f0f6fc'
-    }
+    theme: themes[currentTheme] || themes.dark
   });
 
   fitAddon = new FitAddon.FitAddon();
@@ -525,6 +610,18 @@ function setupEventListeners() {
     });
   }
 
+  // Font size controls
+  fontDecrease?.addEventListener('click', decreaseFontSize);
+  fontIncrease?.addEventListener('click', increaseFontSize);
+
+  // Theme selector
+  themeSelector?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.theme-btn');
+    if (btn && btn.dataset.theme) {
+      setTheme(btn.dataset.theme);
+    }
+  });
+
   // Listen for server status changes from main process
   ipcRenderer.on('server-status-changed', async (event, running) => {
     isServerRunning = running;
@@ -695,6 +792,63 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Font size functions
+function decreaseFontSize() {
+  if (fontSize > 10) {
+    fontSize--;
+    applyFontSize();
+    localStorage.setItem('desktop-font-size', fontSize.toString());
+    updateSettingsUI();
+  }
+}
+
+function increaseFontSize() {
+  if (fontSize < 24) {
+    fontSize++;
+    applyFontSize();
+    localStorage.setItem('desktop-font-size', fontSize.toString());
+    updateSettingsUI();
+  }
+}
+
+function applyFontSize() {
+  if (terminal) {
+    terminal.options.fontSize = fontSize;
+    setTimeout(() => {
+      if (fitAddon) {
+        fitAddon.fit();
+      }
+    }, 50);
+  }
+}
+
+// Theme functions
+function setTheme(themeName) {
+  if (themes[themeName]) {
+    currentTheme = themeName;
+    localStorage.setItem('desktop-theme', themeName);
+    applyTheme();
+    updateSettingsUI();
+  }
+}
+
+function applyTheme() {
+  if (terminal && themes[currentTheme]) {
+    terminal.options.theme = themes[currentTheme];
+    terminal.refresh(0, terminal.rows - 1);
+  }
+}
+
+// Update settings UI
+function updateSettingsUI() {
+  if (fontSizeDisplay) {
+    fontSizeDisplay.textContent = `${fontSize}px`;
+  }
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+  });
 }
 
 // Initialize on load

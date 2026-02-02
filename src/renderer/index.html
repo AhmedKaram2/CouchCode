@@ -147,34 +147,75 @@
         <button id="close-settings" class="close-btn">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="setting-row">
-          <label for="shell-select">Default Shell</label>
-          <select id="shell-select" class="shell-select">
-            <option value="">Loading shells...</option>
-          </select>
-        </div>
-        <div class="setting-row">
-          <label for="port-input">Server Port</label>
-          <input type="number" id="port-input" min="1024" max="65535" value="3847">
-        </div>
-        <div class="setting-row">
-          <label for="pin-input">PIN</label>
-          <div class="input-group">
-            <input type="password" id="pin-input" placeholder="Enter new PIN" minlength="4" maxlength="8">
-            <button id="set-pin" class="btn-secondary">Set</button>
+        <!-- Terminal Appearance -->
+        <div class="setting-section">
+          <h4>Terminal Appearance</h4>
+          <div class="setting-row">
+            <label>Font Size</label>
+            <div class="font-size-control">
+              <button id="font-decrease" class="font-btn">A-</button>
+              <span id="font-size-display">15px</span>
+              <button id="font-increase" class="font-btn">A+</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label>Theme</label>
+            <div class="theme-selector" id="theme-selector">
+              <button class="theme-btn active" data-theme="dark" title="Dark">
+                <span class="theme-preview dark-preview"></span>
+                <span>Dark</span>
+              </button>
+              <button class="theme-btn" data-theme="light" title="Light">
+                <span class="theme-preview light-preview"></span>
+                <span>Light</span>
+              </button>
+              <button class="theme-btn" data-theme="monokai" title="Monokai">
+                <span class="theme-preview monokai-preview"></span>
+                <span>Monokai</span>
+              </button>
+              <button class="theme-btn" data-theme="dracula" title="Dracula">
+                <span class="theme-preview dracula-preview"></span>
+                <span>Dracula</span>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="setting-row checkbox-row">
-          <label>
-            <input type="checkbox" id="start-login">
-            <span>Start on system login</span>
-          </label>
+        <!-- Server Settings -->
+        <div class="setting-section">
+          <h4>Server Settings</h4>
+          <div class="setting-row">
+            <label for="shell-select">Default Shell</label>
+            <select id="shell-select" class="shell-select">
+              <option value="">Loading shells...</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="port-input">Server Port</label>
+            <input type="number" id="port-input" min="1024" max="65535" value="3847">
+          </div>
+          <div class="setting-row">
+            <label for="pin-input">PIN</label>
+            <div class="input-group">
+              <input type="password" id="pin-input" placeholder="Enter new PIN" minlength="4" maxlength="8">
+              <button id="set-pin" class="btn-secondary">Set</button>
+            </div>
+          </div>
         </div>
-        <div class="setting-row checkbox-row">
-          <label>
-            <input type="checkbox" id="start-minimized">
-            <span>Start minimized to tray</span>
-          </label>
+        <!-- Startup Options -->
+        <div class="setting-section">
+          <h4>Startup Options</h4>
+          <div class="setting-row checkbox-row">
+            <label>
+              <input type="checkbox" id="start-login">
+              <span>Start on system login</span>
+            </label>
+          </div>
+          <div class="setting-row checkbox-row">
+            <label>
+              <input type="checkbox" id="start-minimized">
+              <span>Start minimized to tray</span>
+            </label>
+          </div>
         </div>
       </div>
     </div>

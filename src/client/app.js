@@ -277,7 +277,6 @@ class TerminalRemoteApp {
     this.commandInput = document.getElementById('command-input');
     this.sendBtn = document.getElementById('send-btn');
     this.voiceBtn = document.getElementById('voice-btn');
-    this.ttsBtn = document.getElementById('tts-btn');
     this.autoEnterBtn = document.getElementById('auto-enter-btn');
 
     // Sessions panel
@@ -334,6 +333,7 @@ class TerminalRemoteApp {
     this.fontIncrease = document.getElementById('font-increase');
     this.fontSizeDisplay = document.getElementById('font-size-display');
     this.themeSelector = document.getElementById('theme-selector');
+    this.ttsToggle = document.getElementById('tts-toggle');
     this.notifyToggle = document.getElementById('notify-toggle');
     this.soundToggle = document.getElementById('sound-toggle');
     this.hapticToggle = document.getElementById('haptic-toggle');
@@ -449,9 +449,6 @@ class TerminalRemoteApp {
     // Voice button
     this.voiceBtn?.addEventListener('click', () => this.toggleVoiceInput());
 
-    // TTS button
-    this.ttsBtn?.addEventListener('click', () => this.toggleTTS());
-
     // Auto-enter button - enhanced for Chrome & Safari compatibility
     if (this.autoEnterBtn) {
       this.setupAutoEnterButton();
@@ -557,6 +554,7 @@ class TerminalRemoteApp {
     });
 
     // Toggle buttons
+    this.ttsToggle?.addEventListener('click', () => this.toggleSetting('tts'));
     this.notifyToggle?.addEventListener('click', () => this.toggleSetting('notify'));
     this.soundToggle?.addEventListener('click', () => this.toggleSetting('sound'));
     this.hapticToggle?.addEventListener('click', () => this.toggleSetting('haptic'));
@@ -2270,6 +2268,7 @@ class TerminalRemoteApp {
     });
 
     // Toggles
+    this.ttsToggle?.classList.toggle('active', this.ttsEnabled);
     this.notifyToggle?.classList.toggle('active', this.notifyEnabled);
     this.soundToggle?.classList.toggle('active', this.soundEnabled);
     this.hapticToggle?.classList.toggle('active', this.hapticEnabled);
@@ -2284,9 +2283,16 @@ class TerminalRemoteApp {
   }
 
   applyFontSize() {
-    if (this.terminal && this.terminal.term) {
-      this.terminal.term.options.fontSize = this.fontSize;
-      this.terminal.fit();
+    if (this.terminal) {
+      // Access the xterm instance (term property of TerminalWrapper)
+      const term = this.terminal.term;
+      if (term) {
+        term.options.fontSize = this.fontSize;
+        // Force refit after font change
+        setTimeout(() => {
+          this.terminal.fit();
+        }, 50);
+      }
     }
   }
 
@@ -2299,7 +2305,10 @@ class TerminalRemoteApp {
   }
 
   applyTheme() {
-    if (!this.terminal || !this.terminal.term) return;
+    if (!this.terminal) return;
+
+    const term = this.terminal.term;
+    if (!term) return;
 
     const themes = {
       dark: {
@@ -2397,11 +2406,20 @@ class TerminalRemoteApp {
     };
 
     const theme = themes[this.currentTheme] || themes.dark;
-    this.terminal.term.options.theme = theme;
+    term.options.theme = theme;
+    // Force refresh to apply theme
+    term.refresh(0, term.rows - 1);
   }
 
   toggleSetting(setting) {
     switch (setting) {
+      case 'tts':
+        this.ttsEnabled = !this.ttsEnabled;
+        this.setSafeStorage('tts-enabled', this.ttsEnabled.toString());
+        if (this.ttsEnabled) {
+          this.speak('Text to speech enabled');
+        }
+        break;
       case 'notify':
         this.notifyEnabled = !this.notifyEnabled;
         this.setSafeStorage('notify-enabled', this.notifyEnabled.toString());
