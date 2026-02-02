@@ -76,6 +76,26 @@ Perfect for:
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
+### macOS Installation Note
+
+Since the app is not code-signed, macOS may show a warning. To fix this:
+
+**If you see "app is damaged and can't be opened":**
+```bash
+# Open Terminal and run:
+xattr -cr /Applications/CouchCode.app
+```
+
+**If you see "unidentified developer":**
+1. Open **System Preferences** → **Security & Privacy**
+2. Click **Open Anyway** next to the CouchCode message
+
+> **Important:** Choose the correct version for your Mac:
+> - **Apple Silicon** (M1/M2/M3): Use the `arm64` version
+> - **Intel Mac**: Use the `x64` version
+>
+> Using the wrong version will cause session creation to fail.
+
 ### Build From Source
 
 ```bash
