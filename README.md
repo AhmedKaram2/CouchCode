@@ -37,49 +37,40 @@ Perfect for:
 
 ## ✨ Features
 
-> **🎉 New in v1.3.0:** Universal CLI tool support! All user-installed CLI tools (Claude, pipx, cargo, etc.) now work automatically across all platforms. [See what's new →](#-universal-cli-tool-support-new-in-v130)
+> **🎉 New in v1.3.0:** Universal CLI tool support! All user-installed CLI tools (Claude, pipx, cargo, etc.) now work automatically across all platforms.
 
-### 🌐 Remote Access
-- **Browser-Based** - No app installation needed on client devices
-- **PWA Support** - Install as a native-like app on your phone
-- **Real-time Sync** - Instant command execution via WebSocket
-- **Session Persistence** - Terminal history syncs when you reconnect
+**🌐 Remote Access**
+- Browser-based interface with PWA support for mobile
+- Real-time sync via WebSocket
+- Session persistence across reconnects
 
-### 🔒 Security First
-- **PIN Authentication** - Secure access with JWT tokens
-- **Local Network** - Runs on your network, your data stays local
-- **No Cloud Required** - Direct connection, no third-party servers
+**🔒 Security**
+- PIN authentication with JWT tokens
+- Local network only - your data stays private
+- No cloud or third-party servers required
 
-### 📱 Mobile Optimized
-- **Calculator Keyboard** - Quick action buttons for common commands
-- **Voice Input** - Speak commands using speech recognition
-- **Text-to-Speech** - Hear results read aloud
-- **Smart Prompts** - Auto-detect yes/no prompts with quick buttons
+**📱 Mobile Optimized**
+- Calculator-style keyboard with quick actions (Ctrl+C, Tab, arrows)
+- Voice input and text-to-speech
+- Smart yes/no prompt detection
 
-### 🖥️ Multi-Platform
-- **Windows** - PowerShell, CMD, Git Bash, WSL
-- **macOS** - Zsh, Bash, Fish
-- **Linux** - All major shells supported
+**🖥️ Cross-Platform**
+- **Windows:** PowerShell, CMD, Git Bash, WSL
+- **macOS:** Zsh, Bash, Fish
+- **Linux:** All major shells supported
+- **Universal CLI Support:** Login shells load user profiles automatically - Claude CLI, pipx, cargo, and other tools work out of the box
 
-### 🔧 Universal CLI Tool Support (NEW in v1.3.0)
-- **Login Shell Initialization** - All shells load user profiles automatically
-- **Enhanced PATH** - Automatically includes `~/.local/bin`, Homebrew, Cargo, npm global, and more
-- **Works Out-of-the-Box** - Claude CLI, pipx, and other user-installed tools just work
-- **Cross-Platform** - Consistent behavior across Windows, macOS, and Linux
+**🔌 IDE Integration**
+- **VSCode Extension** with embedded terminal panel and sidebar
+- **Status bar** integration for quick access
+- Command palette control
 
-### 🤖 AI Integration
-- **Vibe-Kanban** - Split view with task management board
-- **Vibe-Claude** - Quick command buttons for AI coding agents
-- **Claude Code Ready** - Perfect companion for AI pair programming
+> Install VSCode Extension: Search "CouchCode" in Extensions Marketplace
 
-### 🔌 IDE Integration (NEW!)
-- **VSCode Extension** - Access CouchCode directly in Visual Studio Code
-- **Embedded Terminal Panel** - No need to switch between applications
-- **Session Management Sidebar** - Manage all terminal sessions from VSCode
-- **Status Bar Integration** - Quick access to CouchCode controls
-- **Command Palette** - Full control via keyboard shortcuts
-
-> **Install the VSCode Extension:** Search for "CouchCode" in the VSCode Extensions Marketplace or [install from folder](vscode-extension/)
+**🤖 AI Integration**
+- Split view with Vibe-Kanban task board
+- Quick commands for AI coding assistants
+- Perfect companion for Claude Code
 
 ## 📦 Installation
 
@@ -96,80 +87,26 @@ Perfect for:
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
-### macOS Installation Note
-
-Since the app is not code-signed, macOS may show a warning. To fix this:
-
-**If you see "app is damaged and can't be opened":**
-```bash
-# Open Terminal and run:
-xattr -cr /Applications/CouchCode.app
-```
-
-**If you see "unidentified developer":**
-1. Open **System Preferences** → **Security & Privacy**
-2. Click **Open Anyway** next to the CouchCode message
-
-> **Important:** Choose the correct version for your Mac:
-> - **Apple Silicon** (M1/M2/M3): Use the `arm64` version
-> - **Intel Mac**: Use the `x64` version
->
-> Using the wrong version will cause session creation to fail.
+> **macOS Users:** Choose the correct architecture (M1/M2/M3 = `arm64`, Intel = `x64`). See [FAQ](#-faq--troubleshooting) for security warnings.
 
 ### Build From Source
 
-```bash
-# Clone the repository
-git clone https://github.com/AhmedKaram2/CouchCode.git
-cd CouchCode
-
-# Install dependencies
-npm install
-
-# Run in development mode
-npm start
-
-# Build installer for your platform
-npm run installer
-```
+Want to contribute or customize? See [Contributing](#-contributing) for development setup instructions.
 
 ## 🚀 Quick Start
 
-### 1️⃣ Start CouchCode
+1. **Launch CouchCode** - The app starts a server on your local network
+2. **Connect from any device** - Scan the QR code or enter the URL (e.g., `http://192.168.1.100:3847`)
+3. **Set your PIN** - Create a 4-8 character PIN for authentication
+4. **Start coding!** - Create terminal sessions and run commands remotely 🎉
 
-Launch the app on your computer. It starts a server on your local network.
-
-### 2️⃣ Connect from Your Phone
-
-**Scan QR Code** (easiest):
-- Click the QR icon in the app
-- Scan with your phone camera
-- Opens automatically in browser
-
-**Or enter URL manually**:
-- Note the URL shown (e.g., `http://192.168.1.100:3847`)
-- Open in any browser on your network
-
-### 3️⃣ Set Your PIN
-
-First time: Create a PIN (4-8 characters)
-Next time: Enter your PIN to connect
-
-### 4️⃣ Start Coding! 🎉
-
-Create a terminal session and run commands from your couch!
+**Install as PWA:** Add to home screen on mobile for the best experience ([instructions below](#-install-as-mobile-app))
 
 ## 📱 Install as Mobile App
 
-For the best experience, add to your home screen:
-
-**iPhone/iPad (Safari):**
-1. Open CouchCode URL in Safari
-2. Tap Share → "Add to Home Screen"
-
-**Android (Chrome):**
-1. Open CouchCode URL in Chrome  
-2. Tap Menu → "Add to Home screen"
+Add to your home screen for a native-like experience:
+- **iOS:** Safari → Share → "Add to Home Screen"
+- **Android:** Chrome → Menu → "Add to Home screen"
 
 ## 🎹 Quick Actions
 
@@ -253,95 +190,73 @@ CouchCode/
 
 ## ❓ FAQ / Troubleshooting
 
-### Cannot connect to CouchCode from mobile
-- Ensure your phone and computer are on the **same WiFi network**
-- Check that your firewall allows connections on **port 3847**
-- Try using the computer's IP address instead of localhost
+**Cannot connect from mobile?**
+- Ensure both devices are on the **same WiFi network**
+- Check firewall allows connections on **port 3847**
+- Use computer's IP address (not localhost)
 
-### "Command not found" for CLI tools
-- ✅ **Fixed in v1.3.0!** Update to the latest version
-- CouchCode now loads login shells automatically
-- All CLI tools in `~/.local/bin` and other standard paths work out of the box
+**"Command not found" for CLI tools?**
+- ✅ **Fixed in v1.3.0!** All CLI tools now work automatically
+- Update to latest version for login shell initialization
 
-### VSCode extension shows "Cannot connect"
-- Make sure the CouchCode desktop app is **running**
-- Verify the server URL in settings matches the app's URL
-- Default is `http://localhost:3847`
+**VSCode extension can't connect?**
+- Verify CouchCode desktop app is **running**
+- Check settings URL matches app (default: `http://localhost:3847`)
 
-### macOS says "app is damaged"
-```bash
-xattr -cr /Applications/CouchCode.app
-```
-
-### Session creation fails
-- Make sure you downloaded the **correct architecture**:
-  - Apple Silicon (M1/M2/M3): Use `arm64` version
-  - Intel Mac: Use `x64` version
+**macOS security warnings?**
+- **"App is damaged":** Run `xattr -cr /Applications/CouchCode.app`
+- **"Unidentified developer":** System Preferences → Security & Privacy → Open Anyway
+- **Session creation fails:** Download correct architecture (M1/M2/M3 = `arm64`, Intel = `x64`)
 
 ## 🤝 Contributing
 
-We love contributions! Here's how you can help:
+Contributions welcome! Here's how to help:
 
-### Ways to Contribute
 - 🐛 **Report bugs** - [Open an issue](https://github.com/AhmedKaram2/CouchCode/issues)
 - 💡 **Suggest features** - [Start a discussion](https://github.com/AhmedKaram2/CouchCode/discussions)
 - 📝 **Improve docs** - Fix typos, add examples
 - 🔧 **Submit PRs** - Bug fixes, new features, improvements
 
-### Development Setup
+**Development Setup:**
 ```bash
-# Clone the repository
 git clone https://github.com/AhmedKaram2/CouchCode.git
 cd CouchCode
-
-# Install dependencies
 npm install
-
-# Run in development
-npm start
-
-# Build installers
-npm run installer
+npm start                # Development mode
+npm run installer        # Build installers
 ```
 
-### VSCode Extension Development
+**VSCode Extension:**
 ```bash
-cd vscode-extension
-npm install
-code .
+cd vscode-extension && npm install && code .
 # Press F5 to launch Extension Development Host
 ```
 
 ## 🗺️ Roadmap
 
-### ✅ Completed (v1.3.0)
-- Universal CLI tool support
-- Login shell initialization
+**✅ Completed (v1.3.0)**
+- Universal CLI tool support with login shells
 - Enhanced PATH configuration
 - VSCode extension
 
-### 🚧 In Progress
-- JetBrains IDEs plugin (IntelliJ, Android Studio, etc.)
+**🚧 In Progress**
+- JetBrains IDEs plugin
+- Terminal recording/playback
 - Enhanced session management
-- Terminal recording and playback
 
-### 📋 Planned
-- **Multi-user support** - Share terminals with team members
-- **SSH tunneling** - Secure remote access over the internet
-- **Command history search** - Search across all sessions
-- **Themes and customization** - Custom colors and fonts
-- **Vim mode** - Vi key bindings in web terminal
-- **File transfer** - Drag and drop files to/from terminal
-- **Terminal multiplexing** - Split terminals like tmux
+**📋 Planned**
+- Multi-user support & team collaboration
+- SSH tunneling for remote access
+- Command history search
+- Themes & customization
+- Vim mode & file transfer
+- Terminal multiplexing (tmux-like)
 
-### 💡 Ideas Welcome!
-Have a feature idea? [Open a discussion](https://github.com/AhmedKaram2/CouchCode/discussions) and let's talk about it!
+💡 **Have ideas?** [Open a discussion](https://github.com/AhmedKaram2/CouchCode/discussions)
 
 ## 📝 Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
-
-Latest release: **v1.3.0** - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.3.0)
+**Latest:** v1.3.0 - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.3.0) • [Full History](CHANGELOG.md)
 
 ## 📄 License
 
