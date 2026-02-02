@@ -183,14 +183,49 @@ class PTYManager extends EventEmitter {
     const rows = options.rows || 24;
 
     // Support for running a specific command
-    const args = options.command ? ['-c', options.command] : [];
+    // Use login shell to load user's PATH and environment
+    let args = [];
 
-    console.log(`Creating PTY session: shell=${shell}, cwd=${cwd}, cols=${cols}, rows=${rows}`);
+    // Determine shell type and appropriate flags for login shells
+    const isWindows = os.platform() === 'win32';
+    const shellLower = shell.toLowerCase();
+
+    if (options.command) {
+      // Running a specific command - use login shell with command
+      if (shellLower.includes('bash') || shellLower.includes('zsh')) {
+        args = ['-l', '-c', options.command];
+      } else if (shellLower.includes('fish')) {
+        args = ['--login', '-c', options.command];
+      } else if (shellLower.includes('powershell') || shellLower.includes('pwsh')) {
+        args = ['-Command', options.command];
+      } else {
+        args = ['-c', options.command];
+      }
+    } else {
+      // Interactive shell - load user environment
+      if (shellLower.includes('bash')) {
+        // Git Bash on Windows or regular bash
+        args = isWindows ? ['--login', '-i'] : ['-l'];
+      } else if (shellLower.includes('zsh')) {
+        args = ['-l'];
+      } else if (shellLower.includes('fish')) {
+        args = ['--login'];
+      } else if (shellLower.includes('wsl')) {
+        // WSL should use login mode
+        args = ['--login'];
+      } else if (shellLower.includes('powershell') || shellLower.includes('pwsh')) {
+        // PowerShell loads profile automatically, but ensure it with -NoExit
+        args = ['-NoExit'];
+      }
+      // CMD on Windows doesn't need special flags - uses system PATH
+    }
+
+    console.log(`Creating PTY session: shell=${shell}, cwd=${cwd}, cols=${cols}, rows=${rows}, args=${JSON.stringify(args)}`);
 
     // Get shell info for features
     const shellInfo = this.availableShells.find(s => s.path === shell) || { name: 'Unknown', icon: '💻' };
 
-    // Enhanced environment for fish and other shells
+    // Enhanced environment for all shells
     const shellEnv = {
       ...process.env,
       TERM: 'xterm-256color',
@@ -198,6 +233,45 @@ class PTYManager extends EventEmitter {
       LANG: process.env.LANG || 'en_US.UTF-8',
       LC_ALL: process.env.LC_ALL || 'en_US.UTF-8'
     };
+
+    // Enhance PATH to include common user binary locations
+    // This ensures CLI tools like 'claude' are found even if shell config hasn't loaded yet
+    const pathSeparator = isWindows ? ';' : ':';
+    const userHome = os.homedir();
+    const additionalPaths = [];
+
+    if (isWindows) {
+      // Windows: Add %USERPROFILE%\.local\bin for Claude CLI and other tools
+      additionalPaths.push(
+        `${userHome}\\.local\\bin`,
+        `${userHome}\\AppData\\Local\\Programs`,
+        `${process.env.APPDATA}\\npm` // npm global packages
+      );
+    } else {
+      // Unix-like (Mac/Linux): Add ~/.local/bin and other common locations
+      additionalPaths.push(
+        `${userHome}/.local/bin`,        // Claude CLI, pipx, etc.
+        `${userHome}/bin`,               // User binaries
+        `${userHome}/.npm-global/bin`,   // npm global packages
+        `${userHome}/.cargo/bin`,        // Rust cargo
+        `${userHome}/.deno/bin`,         // Deno
+        '/usr/local/bin',                // Homebrew, local installs
+        '/opt/homebrew/bin'              // Homebrew on Apple Silicon
+      );
+    }
+
+    // Prepend additional paths to existing PATH (if not already present)
+    const existingPath = shellEnv.PATH || shellEnv.Path || '';
+    const existingPaths = existingPath.split(pathSeparator);
+    const newPaths = additionalPaths.filter(p => !existingPaths.includes(p));
+
+    if (newPaths.length > 0) {
+      shellEnv.PATH = [...newPaths, existingPath].filter(Boolean).join(pathSeparator);
+      // Windows also uses 'Path' sometimes
+      if (isWindows) {
+        shellEnv.Path = shellEnv.PATH;
+      }
+    }
 
     // Fish-specific enhancements
     if (shellInfo.name === 'Fish') {
