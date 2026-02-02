@@ -78,6 +78,14 @@ const sendBtn = document.getElementById('send-btn');
 const autoEnterBtn = document.getElementById('auto-enter-btn');
 const quickActions = document.querySelector('.quick-actions');
 
+// Claude Code elements
+const claudeCodeBtn = document.getElementById('claude-code-btn');
+const claudeCodeModal = document.getElementById('claude-code-modal');
+const claudePromptInput = document.getElementById('claude-prompt-input');
+const claudeCancelBtn = document.getElementById('claude-cancel-btn');
+const claudeStartBtn = document.getElementById('claude-start-btn');
+let selectedClaudePrompt = null;
+
 // Initialize
 async function init() {
   await loadSettings();
@@ -523,6 +531,153 @@ function setupEventListeners() {
     await updateServerStatus();
     await updateQRCode();
   });
+
+  // Claude Code button
+  if (claudeCodeBtn) {
+    claudeCodeBtn.addEventListener('click', showClaudeCodeModal);
+  }
+
+  // Claude Code cancel
+  if (claudeCancelBtn) {
+    claudeCancelBtn.addEventListener('click', hideClaudeCodeModal);
+  }
+
+  // Claude Code start
+  if (claudeStartBtn) {
+    claudeStartBtn.addEventListener('click', startClaudeCode);
+  }
+
+  // Claude Code quick action buttons (event delegation)
+  if (claudeCodeModal) {
+    claudeCodeModal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.claude-quick-btn');
+      if (btn) {
+        const prompt = btn.dataset.prompt;
+        if (prompt) {
+          selectClaudeQuickAction(btn, prompt);
+        }
+      }
+      // Close modal on background click
+      if (e.target === claudeCodeModal) {
+        hideClaudeCodeModal();
+      }
+    });
+  }
+}
+
+// Claude Code functions
+function showClaudeCodeModal() {
+  if (claudeCodeModal) {
+    claudeCodeModal.classList.remove('hidden');
+    selectedClaudePrompt = null;
+    if (claudePromptInput) {
+      claudePromptInput.value = '';
+    }
+    // Clear all selected states
+    document.querySelectorAll('.claude-quick-btn').forEach(btn => {
+      btn.classList.remove('selected');
+    });
+    // Focus textarea
+    setTimeout(() => {
+      claudePromptInput?.focus();
+    }, 100);
+  }
+}
+
+function hideClaudeCodeModal() {
+  if (claudeCodeModal) {
+    claudeCodeModal.classList.add('hidden');
+  }
+}
+
+function selectClaudeQuickAction(btn, prompt) {
+  // Toggle selection
+  const wasSelected = btn.classList.contains('selected');
+
+  // Clear all selected states
+  document.querySelectorAll('.claude-quick-btn').forEach(b => {
+    b.classList.remove('selected');
+  });
+
+  if (!wasSelected) {
+    btn.classList.add('selected');
+    selectedClaudePrompt = prompt;
+    if (claudePromptInput) {
+      claudePromptInput.value = prompt;
+    }
+  } else {
+    selectedClaudePrompt = null;
+    if (claudePromptInput) {
+      claudePromptInput.value = '';
+    }
+  }
+}
+
+let pendingClaudePrompt = null;
+
+function startClaudeCode() {
+  // Get prompt from textarea or selected quick action
+  let prompt = claudePromptInput?.value?.trim() || selectedClaudePrompt;
+
+  if (!prompt) {
+    showToast('Please select an action or enter a prompt', 'error');
+    return;
+  }
+
+  // Store the prompt to send after session is ready
+  pendingClaudePrompt = prompt;
+
+  // If no active session, create one first
+  if (!currentSessionId) {
+    hideClaudeCodeModal();
+    createSession();
+    // Wait for session to be ready, then send command
+    waitForSessionAndRunClaude();
+    return;
+  }
+
+  // Session exists, send command directly
+  sendClaudeCommand(prompt);
+}
+
+function waitForSessionAndRunClaude() {
+  // Poll for session to be ready
+  let attempts = 0;
+  const maxAttempts = 20; // 10 seconds max
+
+  const checkSession = () => {
+    attempts++;
+    if (currentSessionId && pendingClaudePrompt) {
+      // Session is ready, send the claude command
+      setTimeout(() => {
+        sendClaudeCommand(pendingClaudePrompt);
+        pendingClaudePrompt = null;
+      }, 500); // Small delay to let terminal initialize
+    } else if (attempts < maxAttempts) {
+      setTimeout(checkSession, 500);
+    } else {
+      showToast('Failed to create session', 'error');
+      pendingClaudePrompt = null;
+    }
+  };
+
+  checkSession();
+}
+
+function sendClaudeCommand(prompt) {
+  // Build the claude command
+  const claudeCommand = `claude "${prompt.replace(/"/g, '\\"')}"`;
+
+  // Send to terminal
+  ipcRenderer.invoke('terminal-input', currentSessionId, claudeCommand + '\r');
+
+  // Hide modal if still open
+  hideClaudeCodeModal();
+
+  // Focus terminal
+  if (terminal) {
+    terminal.focus();
+  }
 }
 
 // Show toast notification

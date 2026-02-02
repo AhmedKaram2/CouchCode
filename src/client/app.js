@@ -316,6 +316,82 @@ class TerminalRemoteApp {
     this.claudePromptInput = document.getElementById('claude-prompt-input');
     this.claudeCancelBtn = document.getElementById('claude-cancel-btn');
     this.claudeStartBtn = document.getElementById('claude-start-btn');
+
+    // Snippets/Quick Commands
+    this.snippetsBtn = document.getElementById('snippets-btn');
+    this.snippetsModal = document.getElementById('snippets-modal');
+    this.snippetsCloseBtn = document.getElementById('snippets-close-btn');
+    this.snippetsSearchInput = document.getElementById('snippets-search-input');
+    this.snippetsList = document.getElementById('snippets-list');
+    this.snippetNewInput = document.getElementById('snippet-new-input');
+    this.snippetAddBtn = document.getElementById('snippet-add-btn');
+
+    // Settings
+    this.settingsBtn = document.getElementById('settings-btn');
+    this.settingsModal = document.getElementById('settings-modal');
+    this.settingsCloseBtn = document.getElementById('settings-close-btn');
+    this.fontDecrease = document.getElementById('font-decrease');
+    this.fontIncrease = document.getElementById('font-increase');
+    this.fontSizeDisplay = document.getElementById('font-size-display');
+    this.themeSelector = document.getElementById('theme-selector');
+    this.notifyToggle = document.getElementById('notify-toggle');
+    this.soundToggle = document.getElementById('sound-toggle');
+    this.hapticToggle = document.getElementById('haptic-toggle');
+
+    // Settings state
+    this.fontSize = parseInt(this.getSafeStorage('font-size', '14'));
+    this.currentTheme = this.getSafeStorage('terminal-theme', 'dark');
+    this.notifyEnabled = this.getSafeStorage('notify-enabled', 'true') === 'true';
+    this.soundEnabled = this.getSafeStorage('sound-enabled', 'true') === 'true';
+    this.hapticEnabled = this.getSafeStorage('haptic-enabled', 'true') === 'true';
+
+    // Command history & favorites
+    this.commandHistory = JSON.parse(this.getSafeStorage('command-history', '[]')) || [];
+    this.favoriteCommands = JSON.parse(this.getSafeStorage('favorite-commands', '[]')) || [];
+
+    // Long command tracking
+    this.commandStartTime = null;
+    this.longCommandThreshold = 5000; // 5 seconds
+
+    // Default snippets by category
+    this.defaultSnippets = {
+      git: [
+        { cmd: 'git status', desc: 'Check status' },
+        { cmd: 'git add .', desc: 'Stage all' },
+        { cmd: 'git commit -m ""', desc: 'Commit' },
+        { cmd: 'git push', desc: 'Push changes' },
+        { cmd: 'git pull', desc: 'Pull changes' },
+        { cmd: 'git log --oneline -10', desc: 'Recent commits' },
+        { cmd: 'git branch', desc: 'List branches' },
+        { cmd: 'git checkout -b ', desc: 'New branch' },
+        { cmd: 'git stash', desc: 'Stash changes' },
+        { cmd: 'git diff', desc: 'Show diff' },
+      ],
+      npm: [
+        { cmd: 'npm install', desc: 'Install deps' },
+        { cmd: 'npm start', desc: 'Start app' },
+        { cmd: 'npm run build', desc: 'Build' },
+        { cmd: 'npm test', desc: 'Run tests' },
+        { cmd: 'npm run dev', desc: 'Dev mode' },
+        { cmd: 'npm outdated', desc: 'Check updates' },
+        { cmd: 'npm audit', desc: 'Security audit' },
+        { cmd: 'npx ', desc: 'Run package' },
+      ],
+      system: [
+        { cmd: 'ls -la', desc: 'List files' },
+        { cmd: 'pwd', desc: 'Current dir' },
+        { cmd: 'cd ', desc: 'Change dir' },
+        { cmd: 'mkdir ', desc: 'Create dir' },
+        { cmd: 'rm -rf ', desc: 'Delete' },
+        { cmd: 'cat ', desc: 'View file' },
+        { cmd: 'grep -r "" .', desc: 'Search' },
+        { cmd: 'find . -name ""', desc: 'Find file' },
+        { cmd: 'ps aux', desc: 'Processes' },
+        { cmd: 'top', desc: 'System monitor' },
+      ]
+    };
+
+    this.currentSnippetTab = 'favorites';
   }
 
   bindEvents() {
@@ -459,6 +535,45 @@ class TerminalRemoteApp {
         this.hideClaudeCodeModal();
       }
     });
+
+    // Snippets modal events
+    this.snippetsBtn?.addEventListener('click', () => this.showSnippetsModal());
+    this.snippetsCloseBtn?.addEventListener('click', () => this.hideSnippetsModal());
+    this.snippetsModal?.addEventListener('click', (e) => {
+      if (e.target === this.snippetsModal) this.hideSnippetsModal();
+    });
+    this.snippetsSearchInput?.addEventListener('input', () => this.filterSnippets());
+    this.snippetAddBtn?.addEventListener('click', () => this.addCustomSnippet());
+    this.snippetNewInput?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.addCustomSnippet();
+    });
+
+    // Snippet tabs
+    document.querySelectorAll('.snippet-tab').forEach(tab => {
+      tab.addEventListener('click', () => this.switchSnippetTab(tab.dataset.tab));
+    });
+
+    // Settings modal events
+    this.settingsBtn?.addEventListener('click', () => this.showSettingsModal());
+    this.settingsCloseBtn?.addEventListener('click', () => this.hideSettingsModal());
+    this.settingsModal?.addEventListener('click', (e) => {
+      if (e.target === this.settingsModal) this.hideSettingsModal();
+    });
+
+    // Font size controls
+    this.fontDecrease?.addEventListener('click', () => this.changeFontSize(-1));
+    this.fontIncrease?.addEventListener('click', () => this.changeFontSize(1));
+
+    // Theme selector
+    this.themeSelector?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.theme-btn');
+      if (btn) this.setTheme(btn.dataset.theme);
+    });
+
+    // Toggle buttons
+    this.notifyToggle?.addEventListener('click', () => this.toggleSetting('notify'));
+    this.soundToggle?.addEventListener('click', () => this.toggleSetting('sound'));
+    this.hapticToggle?.addEventListener('click', () => this.toggleSetting('haptic'));
   }
 
   // Handle action button click
@@ -732,9 +847,17 @@ class TerminalRemoteApp {
   }
 
   checkForCompletion(text) {
-    for (const pattern of this.completionPatterns) {
+    // Only trigger TTS for clear completion messages
+    const completionMessages = [
+      /\b(done|completed|finished|success|succeeded)\b[.!]?\s*$/i,
+      /\bfailed\b[.!:]/i,
+      /\berror\b[.!:]/i,
+      /\bcreated\s+\d+\s+files?\b/i,
+      /\bupdated\s+\d+\s+files?\b/i,
+    ];
+
+    for (const pattern of completionMessages) {
       if (pattern.test(text)) {
-        // Mark as potentially complete
         if (this.isProcessing) {
           this.isProcessing = false;
           // Delay TTS to make sure output is finished
@@ -742,50 +865,62 @@ class TerminalRemoteApp {
             if (!this.isProcessing && this.ttsEnabled) {
               this.speakLastResult();
             }
-          }, 500);
+          }, 800);
         }
+        return;
+      }
+    }
+
+    // Check for shell prompt return (task finished)
+    for (const pattern of this.completionPatterns) {
+      if (pattern.test(text)) {
+        this.isProcessing = false;
         return;
       }
     }
   }
 
   onOutputComplete() {
-    // Called when output stops for a while
-    if (this.isProcessing && this.ttsEnabled) {
+    // Called when output stops for a while - be more selective
+    if (this.isProcessing) {
       this.isProcessing = false;
-      this.speakLastResult();
+
+      // Check for long command notification
+      this.checkLongCommand();
+
+      // Only speak if TTS enabled and we have meaningful content
+      if (this.ttsEnabled) {
+        const meaningfulCount = this.lastOutputLines.filter(l => this.isLineWorthSpeaking(l)).length;
+        if (meaningfulCount >= 1) {
+          this.speakLastResult();
+        } else {
+          this.lastOutputLines = [];
+        }
+      }
     }
   }
 
   speakLastResult() {
     if (!this.ttsEnabled || this.lastOutputLines.length === 0) return;
 
-    // Get the last meaningful lines (skip empty and prompt lines)
+    // Get the last meaningful lines (skip garbage)
     const meaningfulLines = this.lastOutputLines
-      .slice(-10)
-      .filter(line => {
-        const trimmed = line.trim();
-        // Skip empty lines
-        if (trimmed.length === 0) return false;
-        // Skip prompt lines
-        if (/^[$>❯%#]\s*$/.test(trimmed)) return false;
-        // Skip spinner/loading characters only
-        if (/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏\s.]+$/.test(trimmed)) return false;
-        // Skip very short lines
-        if (trimmed.length < 3) return false;
-        return true;
-      });
+      .slice(-15)
+      .filter(line => this.isLineWorthSpeaking(line));
 
-    if (meaningfulLines.length === 0) return;
+    if (meaningfulLines.length === 0) {
+      this.lastOutputLines = [];
+      return;
+    }
 
-    // Get last 3 meaningful lines or summary
-    const linesToSpeak = meaningfulLines.slice(-3);
+    // Get last 2 meaningful lines only
+    const linesToSpeak = meaningfulLines.slice(-2);
     const textToSpeak = linesToSpeak.join('. ');
 
     // Clean and speak
     const cleanText = this.cleanTextForSpeech(textToSpeak);
-    if (cleanText.length > 10) {
-      console.log('TTS speaking result:', cleanText);
+    if (cleanText.length > 8 && this.isTextWorthSpeaking(cleanText)) {
+      console.log('TTS speaking:', cleanText);
       this.speak(cleanText);
     }
 
@@ -793,21 +928,114 @@ class TerminalRemoteApp {
     this.lastOutputLines = [];
   }
 
+  // Check if a line is worth speaking
+  isLineWorthSpeaking(line) {
+    const trimmed = line.trim();
+
+    // Skip empty or very short lines
+    if (trimmed.length < 5) return false;
+
+    // Skip lines that are mostly non-alphanumeric
+    const alphanumeric = trimmed.replace(/[^a-zA-Z0-9]/g, '');
+    if (alphanumeric.length < trimmed.length * 0.3) return false;
+
+    // Skip shell prompts
+    if (/^[$>❯%#→⟩]\s*$/.test(trimmed)) return false;
+    if (/^[\w-]+@[\w-]+[:%~]/.test(trimmed)) return false; // user@host prompts
+    if (/^\([\w-]+\)\s*[$>]/.test(trimmed)) return false; // (env) $ prompts
+
+    // Skip spinner/progress characters
+    if (/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏⣾⣽⣻⢿⡿⣟⣯⣷\s.…─━│┃]+$/.test(trimmed)) return false;
+
+    // Skip progress bars
+    if (/[█▓▒░■□◼◻●○◉◎]+/.test(trimmed)) return false;
+    if (/\[[\s=#-]+\]/.test(trimmed)) return false; // [====    ] style
+    if (/\d+%\s*[|│]/.test(trimmed)) return false;
+
+    // Skip file paths (but not sentences about files)
+    if (/^[\/~.][\w\-\/\.]+$/.test(trimmed)) return false;
+    if (/^[A-Z]:\\[\w\\]+$/.test(trimmed)) return false;
+
+    // Skip git hashes and UUIDs
+    if (/^[a-f0-9]{7,40}$/i.test(trimmed)) return false;
+    if (/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(trimmed)) return false;
+
+    // Skip lines with too many special chars or numbers
+    const specialChars = trimmed.replace(/[a-zA-Z\s]/g, '').length;
+    if (specialChars > trimmed.length * 0.5) return false;
+
+    // Skip timestamps and technical logs
+    if (/^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}/.test(trimmed)) return false;
+    if (/^\[\d{2}:\d{2}:\d{2}\]/.test(trimmed)) return false;
+
+    // Skip npm/yarn/build output noise
+    if (/^(added|removed|updated|audited)\s+\d+\s+packages?/i.test(trimmed)) return false;
+    if (/^\s*(WARN|INFO|DEBUG|TRACE)\s/i.test(trimmed)) return false;
+    if (/^npm\s+(WARN|ERR!)/i.test(trimmed)) return false;
+
+    // Skip repeated characters (like ========)
+    if (/^(.)\1{5,}$/.test(trimmed)) return false;
+
+    // Skip ANSI remnants
+    if (/\[\d+m/.test(trimmed)) return false;
+    if (/\\x1b/.test(trimmed)) return false;
+
+    // Skip lines that are just commands being echoed
+    if (/^\+\s/.test(trimmed)) return false; // set -x output
+
+    return true;
+  }
+
+  // Check if cleaned text is worth speaking
+  isTextWorthSpeaking(text) {
+    // Must have actual words
+    const words = text.split(/\s+/).filter(w => w.length > 2);
+    if (words.length < 2) return false;
+
+    // Must have some recognizable English words
+    const commonWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'has', 'have', 'had',
+      'be', 'been', 'being', 'do', 'does', 'did', 'will', 'would', 'could', 'should',
+      'can', 'may', 'might', 'must', 'shall', 'to', 'of', 'in', 'for', 'on', 'with',
+      'at', 'by', 'from', 'as', 'into', 'through', 'during', 'before', 'after',
+      'above', 'below', 'between', 'under', 'again', 'further', 'then', 'once',
+      'file', 'files', 'error', 'warning', 'success', 'failed', 'complete', 'done',
+      'created', 'updated', 'deleted', 'found', 'not', 'no', 'yes', 'ok', 'okay',
+      'running', 'starting', 'stopping', 'finished', 'processing', 'loading'];
+
+    const lowerText = text.toLowerCase();
+    const hasCommonWord = commonWords.some(word =>
+      lowerText.includes(word + ' ') || lowerText.includes(' ' + word) || lowerText === word
+    );
+
+    return hasCommonWord;
+  }
+
   cleanTextForSpeech(text) {
     return text
       // Remove ANSI escape codes
-      .replace(/\x1b\[[0-9;]*m/g, '')
-      // Remove special characters
-      .replace(/[│┌┐└┘├┤┬┴┼─]/g, '')
-      // Remove emoji-like characters but keep some
-      .replace(/[^\w\s.,?!'":;()\-@#$%&*+=<>\/\\]/g, ' ')
-      // Clean up multiple spaces
+      .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
+      .replace(/\x1b\][^\x07]*\x07/g, '') // OSC sequences
+      // Remove box drawing and special chars
+      .replace(/[│┌┐└┘├┤┬┴┼─━┃║╔╗╚╝╠╣╦╩╬▀▄█▌▐░▒▓■□◼◻●○◉◎⬤⬜⬛]/g, '')
+      // Remove emoji and special unicode
+      .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+      .replace(/[\u{2600}-\u{26FF}]/gu, '')
+      // Remove brackets with technical content
+      .replace(/\[[^\]]*\d+[^\]]*\]/g, '') // [123], [0m], etc
+      .replace(/\([^)]*\d{3,}[^)]*\)/g, '') // (12345), etc
+      // Simplify file paths - just say "file" or extract filename
+      .replace(/[\/~][^\s]+\/([^\s\/]+)/g, 'file $1')
+      .replace(/[A-Z]:\\[^\s]+\\([^\s\\]+)/g, 'file $1')
+      // Remove URLs but say "link"
+      .replace(/https?:\/\/[^\s]+/g, 'link')
+      // Remove remaining special characters
+      .replace(/[^\w\s.,?!'":\-()]/g, ' ')
+      // Clean up multiple spaces/punctuation
       .replace(/\s+/g, ' ')
-      // Clean up paths - make them speakable
-      .replace(/\//g, ' slash ')
-      .replace(/\\/g, ' backslash ')
+      .replace(/\.{2,}/g, '.')
+      .replace(/\s+([.,!?])/g, '$1')
       // Limit length
-      .substring(0, 300)
+      .substring(0, 200)
       .trim();
   }
 
@@ -1171,6 +1399,12 @@ class TerminalRemoteApp {
   sendCommand() {
     const command = this.commandInput.value;
     if (command && this.currentSessionId) {
+      // Add to history
+      if (command.trim()) {
+        this.addToHistory(command.trim());
+      }
+      // Track command start time for notifications
+      this.trackCommandStart();
       // Send with or without Enter based on autoEnter setting
       this.sendInput(this.autoEnter ? command + '\r' : command);
       this.commandInput.value = '';
@@ -1239,6 +1473,7 @@ class TerminalRemoteApp {
     this.initKeyboardLayout();
     this.initVibeClaudeUI();
     this.initWakeLock();
+    this.initSettings();
   }
 
   showTerminal() {
@@ -1701,24 +1936,466 @@ class TerminalRemoteApp {
       return;
     }
 
+    // Store the prompt to send after session is ready
+    this.pendingClaudePrompt = prompt;
+
+    // If no active session, create one first
     if (!this.currentSessionId) {
-      this.showVoiceError('No active terminal session');
+      this.hideClaudeCodeModal();
+      this.createSession();
+      // Wait for session to be ready, then send command
+      this.waitForSessionAndRunClaude();
       return;
     }
 
+    // Session exists, send command directly
+    this.sendClaudeCommand(prompt);
+  }
+
+  waitForSessionAndRunClaude() {
+    // Poll for session to be ready
+    let attempts = 0;
+    const maxAttempts = 20; // 10 seconds max
+
+    const checkSession = () => {
+      attempts++;
+      if (this.currentSessionId && this.pendingClaudePrompt) {
+        // Session is ready, send the claude command
+        setTimeout(() => {
+          this.sendClaudeCommand(this.pendingClaudePrompt);
+          this.pendingClaudePrompt = null;
+        }, 500); // Small delay to let terminal initialize
+      } else if (attempts < maxAttempts) {
+        setTimeout(checkSession, 500);
+      } else {
+        this.showVoiceError('Failed to create session');
+        this.pendingClaudePrompt = null;
+      }
+    };
+
+    checkSession();
+  }
+
+  sendClaudeCommand(prompt) {
     // Build the claude command
-    // Format: claude "prompt text"
     const claudeCommand = `claude "${prompt.replace(/"/g, '\\"')}"`;
 
     // Send to terminal
     this.sendInput(claudeCommand + '\r');
 
-    // Hide modal
+    // Hide modal if still open
     this.hideClaudeCodeModal();
 
     // Focus terminal
     if (this.terminal) {
       this.terminal.focus();
+    }
+  }
+
+  // ==================== SNIPPETS/QUICK COMMANDS ====================
+
+  showSnippetsModal() {
+    if (this.snippetsModal) {
+      this.snippetsModal.classList.remove('hidden');
+      this.renderSnippets();
+      setTimeout(() => this.snippetsSearchInput?.focus(), 100);
+    }
+    this.vibrate();
+  }
+
+  hideSnippetsModal() {
+    if (this.snippetsModal) {
+      this.snippetsModal.classList.add('hidden');
+    }
+  }
+
+  switchSnippetTab(tab) {
+    this.currentSnippetTab = tab;
+    document.querySelectorAll('.snippet-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+    this.renderSnippets();
+    this.vibrate();
+  }
+
+  renderSnippets() {
+    if (!this.snippetsList) return;
+
+    let snippets = [];
+    const searchTerm = this.snippetsSearchInput?.value?.toLowerCase() || '';
+
+    switch (this.currentSnippetTab) {
+      case 'favorites':
+        snippets = this.favoriteCommands.map(cmd => ({ cmd, desc: 'Favorite', fav: true }));
+        break;
+      case 'history':
+        snippets = this.commandHistory.slice(-20).reverse().map(cmd => ({ cmd, desc: 'Recent' }));
+        break;
+      case 'git':
+      case 'npm':
+      case 'system':
+        snippets = this.defaultSnippets[this.currentSnippetTab] || [];
+        break;
+    }
+
+    // Filter by search
+    if (searchTerm) {
+      snippets = snippets.filter(s =>
+        s.cmd.toLowerCase().includes(searchTerm) ||
+        s.desc.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (snippets.length === 0) {
+      this.snippetsList.innerHTML = '<p class="no-snippets">No commands found</p>';
+      return;
+    }
+
+    this.snippetsList.innerHTML = snippets.map((s, i) => `
+      <div class="snippet-item" data-cmd="${this.escapeHtml(s.cmd)}">
+        <div class="snippet-info">
+          <code class="snippet-cmd">${this.escapeHtml(s.cmd)}</code>
+          <span class="snippet-desc">${this.escapeHtml(s.desc)}</span>
+        </div>
+        <div class="snippet-actions">
+          <button class="snippet-fav-btn ${s.fav ? 'active' : ''}" data-fav="${this.escapeHtml(s.cmd)}" title="Favorite">
+            ${s.fav ? '★' : '☆'}
+          </button>
+          <button class="snippet-run-btn" data-run="${this.escapeHtml(s.cmd)}" title="Run">▶</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Add event listeners
+    this.snippetsList.querySelectorAll('.snippet-run-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.runSnippet(btn.dataset.run);
+      });
+    });
+
+    this.snippetsList.querySelectorAll('.snippet-fav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleFavorite(btn.dataset.fav);
+      });
+    });
+
+    this.snippetsList.querySelectorAll('.snippet-item').forEach(item => {
+      item.addEventListener('click', () => {
+        this.runSnippet(item.dataset.cmd);
+      });
+    });
+  }
+
+  filterSnippets() {
+    this.renderSnippets();
+  }
+
+  runSnippet(cmd) {
+    if (!cmd) return;
+
+    // Add to history
+    this.addToHistory(cmd);
+
+    // Check if command needs cursor positioning (ends with space or has "")
+    if (cmd.endsWith(' ') || cmd.includes('""')) {
+      // Put in input for user to complete
+      if (this.commandInput) {
+        this.commandInput.value = cmd.replace('""', '');
+        this.commandInput.focus();
+        // Position cursor before closing quote if applicable
+        const quotePos = cmd.indexOf('""');
+        if (quotePos > -1) {
+          this.commandInput.setSelectionRange(quotePos + 1, quotePos + 1);
+        }
+      }
+    } else {
+      // Run directly
+      this.sendInput(cmd + '\r');
+    }
+
+    this.hideSnippetsModal();
+    this.vibrate();
+  }
+
+  toggleFavorite(cmd) {
+    const index = this.favoriteCommands.indexOf(cmd);
+    if (index > -1) {
+      this.favoriteCommands.splice(index, 1);
+    } else {
+      this.favoriteCommands.push(cmd);
+    }
+    this.setSafeStorage('favorite-commands', JSON.stringify(this.favoriteCommands));
+    this.renderSnippets();
+    this.vibrate();
+  }
+
+  addCustomSnippet() {
+    const cmd = this.snippetNewInput?.value?.trim();
+    if (!cmd) return;
+
+    if (!this.favoriteCommands.includes(cmd)) {
+      this.favoriteCommands.push(cmd);
+      this.setSafeStorage('favorite-commands', JSON.stringify(this.favoriteCommands));
+    }
+
+    this.snippetNewInput.value = '';
+    this.switchSnippetTab('favorites');
+    this.vibrate();
+  }
+
+  addToHistory(cmd) {
+    // Remove duplicates
+    this.commandHistory = this.commandHistory.filter(c => c !== cmd);
+    this.commandHistory.push(cmd);
+    // Keep last 50
+    if (this.commandHistory.length > 50) {
+      this.commandHistory = this.commandHistory.slice(-50);
+    }
+    this.setSafeStorage('command-history', JSON.stringify(this.commandHistory));
+  }
+
+  // ==================== SETTINGS ====================
+
+  showSettingsModal() {
+    if (this.settingsModal) {
+      this.settingsModal.classList.remove('hidden');
+      this.updateSettingsUI();
+    }
+    this.vibrate();
+  }
+
+  hideSettingsModal() {
+    if (this.settingsModal) {
+      this.settingsModal.classList.add('hidden');
+    }
+  }
+
+  updateSettingsUI() {
+    // Font size
+    if (this.fontSizeDisplay) {
+      this.fontSizeDisplay.textContent = `${this.fontSize}px`;
+    }
+
+    // Theme
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.theme === this.currentTheme);
+    });
+
+    // Toggles
+    this.notifyToggle?.classList.toggle('active', this.notifyEnabled);
+    this.soundToggle?.classList.toggle('active', this.soundEnabled);
+    this.hapticToggle?.classList.toggle('active', this.hapticEnabled);
+  }
+
+  changeFontSize(delta) {
+    this.fontSize = Math.max(10, Math.min(24, this.fontSize + delta));
+    this.setSafeStorage('font-size', this.fontSize.toString());
+    this.updateSettingsUI();
+    this.applyFontSize();
+    this.vibrate();
+  }
+
+  applyFontSize() {
+    if (this.terminal && this.terminal.term) {
+      this.terminal.term.options.fontSize = this.fontSize;
+      this.terminal.fit();
+    }
+  }
+
+  setTheme(themeName) {
+    this.currentTheme = themeName;
+    this.setSafeStorage('terminal-theme', themeName);
+    this.applyTheme();
+    this.updateSettingsUI();
+    this.vibrate();
+  }
+
+  applyTheme() {
+    if (!this.terminal || !this.terminal.term) return;
+
+    const themes = {
+      dark: {
+        background: '#0d1117',
+        foreground: '#f0f6fc',
+        cursor: '#58a6ff',
+        cursorAccent: '#0d1117',
+        selection: 'rgba(56, 139, 253, 0.3)',
+        black: '#484f58',
+        red: '#ff7b72',
+        green: '#3fb950',
+        yellow: '#d29922',
+        blue: '#58a6ff',
+        magenta: '#bc8cff',
+        cyan: '#39c5cf',
+        white: '#b1bac4',
+        brightBlack: '#6e7681',
+        brightRed: '#ffa198',
+        brightGreen: '#56d364',
+        brightYellow: '#e3b341',
+        brightBlue: '#79c0ff',
+        brightMagenta: '#d2a8ff',
+        brightCyan: '#56d4dd',
+        brightWhite: '#f0f6fc'
+      },
+      light: {
+        background: '#ffffff',
+        foreground: '#24292f',
+        cursor: '#0969da',
+        cursorAccent: '#ffffff',
+        selection: 'rgba(9, 105, 218, 0.2)',
+        black: '#24292f',
+        red: '#cf222e',
+        green: '#1a7f37',
+        yellow: '#9a6700',
+        blue: '#0969da',
+        magenta: '#8250df',
+        cyan: '#1b7c83',
+        white: '#6e7781',
+        brightBlack: '#57606a',
+        brightRed: '#a40e26',
+        brightGreen: '#2da44e',
+        brightYellow: '#bf8700',
+        brightBlue: '#218bff',
+        brightMagenta: '#a475f9',
+        brightCyan: '#3192aa',
+        brightWhite: '#8c959f'
+      },
+      monokai: {
+        background: '#272822',
+        foreground: '#f8f8f2',
+        cursor: '#f8f8f0',
+        cursorAccent: '#272822',
+        selection: 'rgba(73, 72, 62, 0.8)',
+        black: '#272822',
+        red: '#f92672',
+        green: '#a6e22e',
+        yellow: '#f4bf75',
+        blue: '#66d9ef',
+        magenta: '#ae81ff',
+        cyan: '#a1efe4',
+        white: '#f8f8f2',
+        brightBlack: '#75715e',
+        brightRed: '#f92672',
+        brightGreen: '#a6e22e',
+        brightYellow: '#f4bf75',
+        brightBlue: '#66d9ef',
+        brightMagenta: '#ae81ff',
+        brightCyan: '#a1efe4',
+        brightWhite: '#f9f8f5'
+      },
+      dracula: {
+        background: '#282a36',
+        foreground: '#f8f8f2',
+        cursor: '#f8f8f2',
+        cursorAccent: '#282a36',
+        selection: 'rgba(68, 71, 90, 0.8)',
+        black: '#21222c',
+        red: '#ff5555',
+        green: '#50fa7b',
+        yellow: '#f1fa8c',
+        blue: '#bd93f9',
+        magenta: '#ff79c6',
+        cyan: '#8be9fd',
+        white: '#f8f8f2',
+        brightBlack: '#6272a4',
+        brightRed: '#ff6e6e',
+        brightGreen: '#69ff94',
+        brightYellow: '#ffffa5',
+        brightBlue: '#d6acff',
+        brightMagenta: '#ff92df',
+        brightCyan: '#a4ffff',
+        brightWhite: '#ffffff'
+      }
+    };
+
+    const theme = themes[this.currentTheme] || themes.dark;
+    this.terminal.term.options.theme = theme;
+  }
+
+  toggleSetting(setting) {
+    switch (setting) {
+      case 'notify':
+        this.notifyEnabled = !this.notifyEnabled;
+        this.setSafeStorage('notify-enabled', this.notifyEnabled.toString());
+        if (this.notifyEnabled) {
+          this.requestNotificationPermission();
+        }
+        break;
+      case 'sound':
+        this.soundEnabled = !this.soundEnabled;
+        this.setSafeStorage('sound-enabled', this.soundEnabled.toString());
+        break;
+      case 'haptic':
+        this.hapticEnabled = !this.hapticEnabled;
+        this.setSafeStorage('haptic-enabled', this.hapticEnabled.toString());
+        break;
+    }
+    this.updateSettingsUI();
+    this.vibrate();
+  }
+
+  // ==================== NOTIFICATIONS ====================
+
+  requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  sendNotification(title, body) {
+    if (!this.notifyEnabled) return;
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const notification = new Notification(title, {
+        body: body,
+        icon: 'icons/icon-192.png',
+        badge: 'icons/icon-192.png',
+        vibrate: [200, 100, 200],
+        tag: 'couchcode-notification',
+        renotify: true
+      });
+
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      // Auto close after 5 seconds
+      setTimeout(() => notification.close(), 5000);
+    }
+  }
+
+  // Track command start time
+  trackCommandStart() {
+    this.commandStartTime = Date.now();
+  }
+
+  // Check if command was long-running and notify
+  checkLongCommand() {
+    if (!this.commandStartTime) return;
+
+    const duration = Date.now() - this.commandStartTime;
+    if (duration > this.longCommandThreshold) {
+      this.sendNotification('Command Complete', `Your command finished after ${Math.round(duration / 1000)}s`);
+    }
+    this.commandStartTime = null;
+  }
+
+  // Override vibrate to respect settings
+  vibrate() {
+    if (this.hapticEnabled && 'vibrate' in navigator) {
+      navigator.vibrate(50);
+    }
+  }
+
+  // Initialize settings on app start
+  initSettings() {
+    this.applyFontSize();
+    this.applyTheme();
+    if (this.notifyEnabled) {
+      this.requestNotificationPermission();
     }
   }
 }

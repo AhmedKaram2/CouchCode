@@ -800,3 +800,208 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
+
+/* ==================== CLAUDE CODE STYLES ==================== */
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.header-btn:hover {
+  background: var(--surface-light);
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.header-btn.claude-code-btn {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.1) 0%, rgba(251, 146, 60, 0.1) 100%);
+  border-color: rgba(249, 115, 22, 0.3);
+  color: #fb923c;
+}
+
+.header-btn.claude-code-btn:hover {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.2) 0%, rgba(251, 146, 60, 0.2) 100%);
+  border-color: rgba(249, 115, 22, 0.5);
+  color: #fdba74;
+  box-shadow: 0 0 12px rgba(249, 115, 22, 0.3);
+}
+
+/* Claude Code Modal */
+.claude-modal {
+  width: 480px;
+  max-width: 95vw;
+}
+
+.claude-modal .modal-header,
+.claude-modal .claude-header {
+  flex-direction: column;
+  text-align: center;
+  padding: 24px 24px 16px;
+  background: linear-gradient(180deg, rgba(249, 115, 22, 0.1) 0%, transparent 100%);
+}
+
+.claude-modal .modal-icon,
+.claude-modal .claude-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+}
+
+.claude-modal h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.claude-modal .modal-header p,
+.claude-modal .claude-header p {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.claude-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.claude-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.claude-quick-btn:hover {
+  background: var(--surface-light);
+  border-color: #f97316;
+  transform: translateY(-2px);
+}
+
+.claude-quick-btn.selected {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: #f97316;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
+.claude-quick-btn .quick-icon {
+  font-size: 1.5rem;
+}
+
+.claude-quick-btn .quick-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.claude-quick-btn:hover .quick-label,
+.claude-quick-btn.selected .quick-label {
+  color: var(--text-primary);
+}
+
+.claude-custom-prompt {
+  margin-top: 16px;
+}
+
+.claude-custom-prompt textarea {
+  width: 100%;
+  height: 100px;
+  padding: 14px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  outline: none;
+  resize: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.claude-custom-prompt textarea:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.claude-custom-prompt textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.modal-footer,
+.claude-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 12px 24px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-btn.secondary {
+  background: var(--surface-light);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-btn.secondary:hover {
+  background: var(--border-color);
+}
+
+.modal-btn.primary {
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+}
+
+.modal-btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+}
+
+.modal-btn.primary:active {
+  transform: scale(0.98);
+}

@@ -287,6 +287,11 @@
           <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
         </svg>
       </button>
+      <button id="snippets-btn" class="snippets-btn" title="Quick commands & snippets">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="currentColor" d="M17.66 17.66l-1.06 1.06-.71-.71 1.06-1.06-1.94-1.94-1.06 1.06-.71-.71 1.06-1.06-1.94-1.94-1.06 1.06-.71-.71 1.06-1.06L9.7 9.7l-1.06 1.06-.71-.71 1.06-1.06-1.94-1.94-1.06 1.06-.71-.71 1.06-1.06L4.4 4.4 3 5.8l14.14 14.14 1.41-1.41-1.89-1.87zM14.5 4l-5 5 5 5L19 9.5 14.5 4zm-9 9L3 15.5 7.5 20l2.5-2.5-4.5-4.5z"/>
+        </svg>
+      </button>
       <input type="text" id="command-input" placeholder="Type command..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
       <button id="auto-enter-btn" class="auto-enter-btn active" title="Toggle auto-enter (currently ON)">
         <span class="enter-icon">↵</span>
@@ -299,6 +304,11 @@
       <button id="tts-btn" class="tts-btn" title="Read output aloud">
         <svg viewBox="0 0 24 24" width="22" height="22">
           <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+      <button id="settings-btn" class="settings-btn" title="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
         </svg>
       </button>
     </div>
@@ -348,13 +358,37 @@
             <span class="quick-icon">🧪</span>
             <span class="quick-label">Test</span>
           </button>
-          <button class="claude-quick-btn" data-prompt="Refactor and optimize">
+          <button class="claude-quick-btn" data-prompt="Refactor and optimize this code">
             <span class="quick-icon">⚡</span>
             <span class="quick-label">Optimize</span>
           </button>
-          <button class="claude-quick-btn" data-prompt="Add documentation">
+          <button class="claude-quick-btn" data-prompt="Add documentation and comments">
             <span class="quick-icon">📝</span>
             <span class="quick-label">Document</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Fix security vulnerabilities">
+            <span class="quick-icon">🔒</span>
+            <span class="quick-label">Security</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Convert to TypeScript">
+            <span class="quick-icon">📘</span>
+            <span class="quick-label">TypeScript</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Add error handling">
+            <span class="quick-icon">🛡️</span>
+            <span class="quick-label">Errors</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Create API endpoint">
+            <span class="quick-icon">🌐</span>
+            <span class="quick-label">API</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Write a React component">
+            <span class="quick-icon">⚛️</span>
+            <span class="quick-label">React</span>
+          </button>
+          <button class="claude-quick-btn" data-prompt="Help me with git">
+            <span class="quick-icon">📦</span>
+            <span class="quick-label">Git</span>
           </button>
         </div>
         <div class="claude-custom-prompt">
@@ -369,6 +403,121 @@
           </svg>
           Start Coding
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Commands/Snippets Modal -->
+  <div id="snippets-modal" class="modal hidden">
+    <div class="modal-content snippets-modal">
+      <div class="modal-header snippets-header">
+        <h3>Quick Commands</h3>
+        <button id="snippets-close-btn" class="modal-close-btn">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body snippets-body">
+        <!-- Search -->
+        <div class="snippets-search">
+          <input type="text" id="snippets-search-input" placeholder="Search commands...">
+        </div>
+        <!-- Categories -->
+        <div class="snippets-tabs">
+          <button class="snippet-tab active" data-tab="favorites">Favorites</button>
+          <button class="snippet-tab" data-tab="history">History</button>
+          <button class="snippet-tab" data-tab="git">Git</button>
+          <button class="snippet-tab" data-tab="npm">NPM</button>
+          <button class="snippet-tab" data-tab="system">System</button>
+        </div>
+        <!-- Snippet List -->
+        <div class="snippets-list" id="snippets-list">
+          <!-- Populated by JS -->
+        </div>
+        <!-- Add Custom -->
+        <div class="snippets-add">
+          <input type="text" id="snippet-new-input" placeholder="Add custom command...">
+          <button id="snippet-add-btn" class="snippet-add-btn">+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content settings-modal">
+      <div class="modal-header settings-header">
+        <h3>Settings</h3>
+        <button id="settings-close-btn" class="modal-close-btn">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body settings-body">
+        <!-- Font Size -->
+        <div class="setting-group">
+          <label>Terminal Font Size</label>
+          <div class="font-size-control">
+            <button id="font-decrease" class="font-btn">A-</button>
+            <span id="font-size-display">14px</span>
+            <button id="font-increase" class="font-btn">A+</button>
+          </div>
+        </div>
+        <!-- Theme -->
+        <div class="setting-group">
+          <label>Terminal Theme</label>
+          <div class="theme-selector" id="theme-selector">
+            <button class="theme-btn active" data-theme="dark" title="Dark">
+              <span class="theme-preview dark-preview"></span>
+              <span>Dark</span>
+            </button>
+            <button class="theme-btn" data-theme="light" title="Light">
+              <span class="theme-preview light-preview"></span>
+              <span>Light</span>
+            </button>
+            <button class="theme-btn" data-theme="monokai" title="Monokai">
+              <span class="theme-preview monokai-preview"></span>
+              <span>Monokai</span>
+            </button>
+            <button class="theme-btn" data-theme="dracula" title="Dracula">
+              <span class="theme-preview dracula-preview"></span>
+              <span>Dracula</span>
+            </button>
+          </div>
+        </div>
+        <!-- Notifications -->
+        <div class="setting-group">
+          <label>Notifications</label>
+          <div class="setting-toggle">
+            <span>Notify on long command completion</span>
+            <button id="notify-toggle" class="toggle-btn active">
+              <span class="toggle-slider"></span>
+            </button>
+          </div>
+          <div class="setting-toggle">
+            <span>Sound on prompt detection</span>
+            <button id="sound-toggle" class="toggle-btn active">
+              <span class="toggle-slider"></span>
+            </button>
+          </div>
+        </div>
+        <!-- Haptics -->
+        <div class="setting-group">
+          <label>Haptic Feedback</label>
+          <div class="setting-toggle">
+            <span>Vibrate on key press</span>
+            <button id="haptic-toggle" class="toggle-btn active">
+              <span class="toggle-slider"></span>
+            </button>
+          </div>
+        </div>
+        <!-- About -->
+        <div class="setting-group about-group">
+          <p class="app-version">CouchCode v1.0.0</p>
+          <p class="app-credit">Made with love from the couch</p>
+        </div>
       </div>
     </div>
   </div>
