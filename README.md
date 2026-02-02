@@ -5,8 +5,10 @@
 ### Code From Your Couch - Control Your Terminal From Anywhere
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![GitHub release](https://img.shields.io/github/v/release/AhmedKaram2/CouchCode)](https://github.com/AhmedKaram2/CouchCode/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue.svg)](#installation)
 [![Electron](https://img.shields.io/badge/Electron-28.x-47848F.svg?logo=electron)](https://www.electronjs.org/)
+[![VSCode Extension](https://img.shields.io/badge/VSCode-Extension-blue.svg?logo=visual-studio-code)](https://marketplace.visualstudio.com/items?itemName=AhmedMahmoudKaram.couchcode-vscode)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AhmedKaram2/CouchCode/pulls)
 
 <p align="center">
@@ -17,7 +19,7 @@
   <em>Because the best code is written from the comfort of your couch.</em> 🛋️
 </p>
 
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Screenshots](#-screenshots) • [Contributing](#-contributing)
+[Features](#-features) • [Installation](#-installation) • [Quick Start](#-quick-start) • [Screenshots](#-screenshots) • [FAQ](#-faq--troubleshooting) • [Contributing](#-contributing) • [Roadmap](#-roadmap)
 
 ---
 
@@ -248,6 +250,98 @@ CouchCode/
 </div>
 
 > **Note:** To add your own screenshots, save images to the `screenshots/` folder and they'll appear here.
+
+## ❓ FAQ / Troubleshooting
+
+### Cannot connect to CouchCode from mobile
+- Ensure your phone and computer are on the **same WiFi network**
+- Check that your firewall allows connections on **port 3847**
+- Try using the computer's IP address instead of localhost
+
+### "Command not found" for CLI tools
+- ✅ **Fixed in v1.3.0!** Update to the latest version
+- CouchCode now loads login shells automatically
+- All CLI tools in `~/.local/bin` and other standard paths work out of the box
+
+### VSCode extension shows "Cannot connect"
+- Make sure the CouchCode desktop app is **running**
+- Verify the server URL in settings matches the app's URL
+- Default is `http://localhost:3847`
+
+### macOS says "app is damaged"
+```bash
+xattr -cr /Applications/CouchCode.app
+```
+
+### Session creation fails
+- Make sure you downloaded the **correct architecture**:
+  - Apple Silicon (M1/M2/M3): Use `arm64` version
+  - Intel Mac: Use `x64` version
+
+## 🤝 Contributing
+
+We love contributions! Here's how you can help:
+
+### Ways to Contribute
+- 🐛 **Report bugs** - [Open an issue](https://github.com/AhmedKaram2/CouchCode/issues)
+- 💡 **Suggest features** - [Start a discussion](https://github.com/AhmedKaram2/CouchCode/discussions)
+- 📝 **Improve docs** - Fix typos, add examples
+- 🔧 **Submit PRs** - Bug fixes, new features, improvements
+
+### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/AhmedKaram2/CouchCode.git
+cd CouchCode
+
+# Install dependencies
+npm install
+
+# Run in development
+npm start
+
+# Build installers
+npm run installer
+```
+
+### VSCode Extension Development
+```bash
+cd vscode-extension
+npm install
+code .
+# Press F5 to launch Extension Development Host
+```
+
+## 🗺️ Roadmap
+
+### ✅ Completed (v1.3.0)
+- Universal CLI tool support
+- Login shell initialization
+- Enhanced PATH configuration
+- VSCode extension
+
+### 🚧 In Progress
+- JetBrains IDEs plugin (IntelliJ, Android Studio, etc.)
+- Enhanced session management
+- Terminal recording and playback
+
+### 📋 Planned
+- **Multi-user support** - Share terminals with team members
+- **SSH tunneling** - Secure remote access over the internet
+- **Command history search** - Search across all sessions
+- **Themes and customization** - Custom colors and fonts
+- **Vim mode** - Vi key bindings in web terminal
+- **File transfer** - Drag and drop files to/from terminal
+- **Terminal multiplexing** - Split terminals like tmux
+
+### 💡 Ideas Welcome!
+Have a feature idea? [Open a discussion](https://github.com/AhmedKaram2/CouchCode/discussions) and let's talk about it!
+
+## 📝 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
+Latest release: **v1.3.0** - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.3.0)
 
 ## 📄 License
 
