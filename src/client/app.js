@@ -309,6 +309,13 @@ class TerminalRemoteApp {
     this.vibeClaudeBar = document.getElementById('vibe-claude-bar');
     this.vibeEnableBtn = document.getElementById('vibe-enable-btn');
     this.vibeToggleBtn = document.getElementById('vibe-toggle-btn');
+
+    // Claude Code integration
+    this.claudeCodeBtn = document.getElementById('claude-code-btn');
+    this.claudeCodeModal = document.getElementById('claude-code-modal');
+    this.claudePromptInput = document.getElementById('claude-prompt-input');
+    this.claudeCancelBtn = document.getElementById('claude-cancel-btn');
+    this.claudeStartBtn = document.getElementById('claude-start-btn');
   }
 
   bindEvents() {
@@ -427,6 +434,29 @@ class TerminalRemoteApp {
         if (cmd) {
           this.executeVibeCommand(cmd);
         }
+      }
+    });
+
+    // Claude Code modal events
+    this.claudeCodeBtn?.addEventListener('click', () => this.showClaudeCodeModal());
+    this.claudeCancelBtn?.addEventListener('click', () => this.hideClaudeCodeModal());
+    this.claudeStartBtn?.addEventListener('click', () => this.startClaudeCode());
+
+    // Claude Code quick action buttons (event delegation)
+    this.claudeCodeModal?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.claude-quick-btn');
+      if (btn) {
+        const prompt = btn.dataset.prompt;
+        if (prompt) {
+          this.selectClaudeQuickAction(btn, prompt);
+        }
+      }
+    });
+
+    // Close modal on background click
+    this.claudeCodeModal?.addEventListener('click', (e) => {
+      if (e.target === this.claudeCodeModal) {
+        this.hideClaudeCodeModal();
       }
     });
   }
@@ -1606,6 +1636,90 @@ class TerminalRemoteApp {
         await this.requestWakeLock();
       }
     });
+  }
+
+  // ==================== CLAUDE CODE INTEGRATION ====================
+
+  showClaudeCodeModal() {
+    if (this.claudeCodeModal) {
+      this.claudeCodeModal.classList.remove('hidden');
+      // Reset state
+      this.selectedClaudePrompt = null;
+      if (this.claudePromptInput) {
+        this.claudePromptInput.value = '';
+      }
+      // Clear all selected states
+      document.querySelectorAll('.claude-quick-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      // Focus textarea
+      setTimeout(() => {
+        this.claudePromptInput?.focus();
+      }, 100);
+    }
+    this.vibrate();
+  }
+
+  hideClaudeCodeModal() {
+    if (this.claudeCodeModal) {
+      this.claudeCodeModal.classList.add('hidden');
+    }
+    this.vibrate();
+  }
+
+  selectClaudeQuickAction(btn, prompt) {
+    // Toggle selection
+    const wasSelected = btn.classList.contains('selected');
+
+    // Clear all selected states
+    document.querySelectorAll('.claude-quick-btn').forEach(b => {
+      b.classList.remove('selected');
+    });
+
+    if (!wasSelected) {
+      btn.classList.add('selected');
+      this.selectedClaudePrompt = prompt;
+      // Also put in textarea for editing
+      if (this.claudePromptInput) {
+        this.claudePromptInput.value = prompt;
+      }
+    } else {
+      this.selectedClaudePrompt = null;
+      if (this.claudePromptInput) {
+        this.claudePromptInput.value = '';
+      }
+    }
+    this.vibrate();
+  }
+
+  startClaudeCode() {
+    // Get prompt from textarea or selected quick action
+    let prompt = this.claudePromptInput?.value?.trim() || this.selectedClaudePrompt;
+
+    if (!prompt) {
+      this.showVoiceError('Please select an action or enter a prompt');
+      return;
+    }
+
+    if (!this.currentSessionId) {
+      this.showVoiceError('No active terminal session');
+      return;
+    }
+
+    // Build the claude command
+    // Format: claude "prompt text"
+    const claudeCommand = `claude "${prompt.replace(/"/g, '\\"')}"`;
+
+    // Send to terminal
+    this.sendInput(claudeCommand + '\r');
+
+    // Hide modal
+    this.hideClaudeCodeModal();
+
+    // Focus terminal
+    if (this.terminal) {
+      this.terminal.focus();
+    }
   }
 }
 

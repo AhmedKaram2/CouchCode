@@ -1,5 +1,5 @@
 // Service Worker for CouchCode PWA
-const CACHE_NAME = 'couchcode-v16';
+const CACHE_NAME = 'couchcode-v17';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
