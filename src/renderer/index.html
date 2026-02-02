@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CouchCode</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>CouchCode</h1>
+        <div id="status-badge" class="status-badge stopped">
+          <span class="status-dot"></span>
+          <span id="status-text">Stopped</span>
+        </div>
+      </div>
+
+      <!-- QR Code Section -->
+      <section class="qr-section">
+        <div id="qr-container" class="qr-container">
+          <img id="qr-code" src="" alt="QR Code">
+        </div>
+        <p class="qr-instruction">Scan with your phone</p>
+        <div class="url-container">
+          <input type="text" id="url-display" readonly>
+          <button id="copy-url" class="btn-icon" title="Copy URL">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+              <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Sessions List -->
+      <section class="sessions-section">
+        <div class="section-header">
+          <h2>Sessions</h2>
+          <button id="new-session-btn" class="btn-icon" title="New Session">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </button>
+        </div>
+        <div id="sessions-list" class="sessions-list">
+          <p class="no-sessions">No active sessions</p>
+        </div>
+      </section>
+
+      <!-- Server Controls -->
+      <div class="sidebar-footer">
+        <button id="toggle-server" class="btn-primary">Start Server</button>
+        <button id="settings-btn" class="btn-secondary">Settings</button>
+      </div>
+    </aside>
+
+    <!-- Main Content - Terminal -->
+    <main class="main-content">
+      <!-- Terminal Header -->
+      <header class="terminal-header">
+        <h2 id="session-title">No Session</h2>
+        <div class="header-actions">
+          <span id="connected-clients" class="clients-badge">0 clients</span>
+        </div>
+      </header>
+
+      <!-- Terminal Container -->
+      <div id="terminal-container" class="terminal-container">
+        <div id="terminal"></div>
+        <div id="no-session-msg" class="no-session-msg">
+          <svg viewBox="0 0 24 24" width="64" height="64">
+            <rect x="2" y="3" width="20" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M6 8l4 4-4 4M12 16h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>No active session</p>
+          <button id="create-session-btn" class="btn-primary">Create Session</button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <!-- Response Buttons -->
+        <div class="action-group response-group">
+          <button class="action-btn yes-btn" data-action="yes" title="Yes">✓ Yes</button>
+          <button class="action-btn no-btn" data-action="no" title="No">✗ No</button>
+          <button class="action-btn enter-btn" data-action="enter" title="Enter">↵</button>
+        </div>
+        <!-- Text Editing -->
+        <div class="action-group edit-group">
+          <button class="action-btn" data-action="backspace" title="Backspace">⌫</button>
+          <button class="action-btn" data-action="delete" title="Delete">Del</button>
+          <button class="action-btn" data-action="delete-word" title="Delete Word">⌫W</button>
+          <button class="action-btn" data-action="delete-line" title="Delete Line">⌫L</button>
+        </div>
+        <!-- Navigation -->
+        <div class="action-group nav-group">
+          <button class="action-btn" data-action="home" title="Home">⇤</button>
+          <button class="action-btn" data-action="up" title="Up">↑</button>
+          <button class="action-btn" data-action="down" title="Down">↓</button>
+          <button class="action-btn" data-action="left" title="Left">←</button>
+          <button class="action-btn" data-action="right" title="Right">→</button>
+          <button class="action-btn" data-action="end" title="End">⇥</button>
+        </div>
+        <!-- Control Keys -->
+        <div class="action-group control-group">
+          <button class="action-btn danger-btn" data-action="ctrl-c" title="Ctrl+C">^C</button>
+          <button class="action-btn" data-action="ctrl-d" title="Ctrl+D">^D</button>
+          <button class="action-btn tab-btn" data-action="tab" title="Tab">Tab</button>
+          <button class="action-btn" data-action="ctrl-z" title="Ctrl+Z">^Z</button>
+        </div>
+        <!-- Utility -->
+        <div class="action-group utility-group">
+          <button class="action-btn" data-action="ctrl-l" title="Clear Screen">Clear</button>
+          <button class="action-btn" data-action="ctrl-r" title="Search History">🔍</button>
+          <button class="action-btn" data-action="esc" title="Escape">Esc</button>
+        </div>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="input-bar">
+        <input type="text" id="command-input" placeholder="Type command and press Enter..." autocomplete="off">
+        <button id="auto-enter-btn" class="auto-enter-btn active" title="Auto-enter ON (click to toggle)">
+          <span class="enter-icon">↵</span>
+        </button>
+        <button id="send-btn" class="send-btn" title="Send">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="close-settings" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <label for="shell-select">Default Shell</label>
+          <select id="shell-select" class="shell-select">
+            <option value="">Loading shells...</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label for="port-input">Server Port</label>
+          <input type="number" id="port-input" min="1024" max="65535" value="3847">
+        </div>
+        <div class="setting-row">
+          <label for="pin-input">PIN</label>
+          <div class="input-group">
+            <input type="password" id="pin-input" placeholder="Enter new PIN" minlength="4" maxlength="8">
+            <button id="set-pin" class="btn-secondary">Set</button>
+          </div>
+        </div>
+        <div class="setting-row checkbox-row">
+          <label>
+            <input type="checkbox" id="start-login">
+            <span>Start on system login</span>
+          </label>
+        </div>
+        <div class="setting-row checkbox-row">
+          <label>
+            <input type="checkbox" id="start-minimized">
+            <span>Start minimized to tray</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

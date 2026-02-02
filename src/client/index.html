@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CouchCode">
+  <meta name="description" content="Control your terminal remotely from any device">
+
+  <title>CouchCode</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- xterm.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Login Screen -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-header">
+        <div class="app-icon">
+          <svg viewBox="0 0 24 24" width="48" height="48">
+            <rect x="2" y="3" width="20" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M6 8l4 4-4 4M12 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1>CouchCode</h1>
+        <p>Enter your PIN to connect</p>
+      </div>
+
+      <form id="login-form">
+        <div class="pin-input-container">
+          <input type="password" id="pin-input" placeholder="Enter PIN" minlength="4" maxlength="8" autocomplete="off" inputmode="numeric">
+        </div>
+        <button type="submit" id="login-btn" class="btn-primary">Connect</button>
+      </form>
+
+      <div id="login-error" class="error-message hidden"></div>
+
+      <p class="login-hint">First time? Enter a PIN to set it up.</p>
+    </div>
+  </div>
+
+  <!-- Main App Screen -->
+  <div id="app-screen" class="screen">
+    <!-- Header -->
+    <header class="app-header">
+      <button id="sessions-btn" class="header-btn" title="Sessions">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/>
+        </svg>
+        <span id="session-count" class="badge">0</span>
+      </button>
+
+      <h1 id="session-title">Terminal</h1>
+
+      <div class="header-actions">
+        <button id="kanban-btn" class="header-btn" title="Toggle Kanban Board">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H7V7h4v10zm6 0h-4V7h4v10z"/>
+          </svg>
+        </button>
+        <button id="new-session-btn" class="header-btn" title="New Session">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Smart Prompt Bar (appears when prompts detected) -->
+    <div id="smart-prompt-bar" class="smart-prompt-bar"></div>
+
+    <!-- Main Content Split View -->
+    <div id="main-content" class="main-content">
+      <!-- Terminal Container -->
+      <div id="terminal-container" class="terminal-side">
+        <div id="terminal"></div>
+        <div id="no-session" class="no-session">
+          <p>No active session</p>
+          <button id="create-first-session" class="btn-primary">Create Session</button>
+        </div>
+        <!-- Scroll Controls -->
+        <div class="scroll-controls">
+          <button id="scroll-top-btn" class="scroll-btn" title="Scroll to top">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+            </svg>
+          </button>
+          <button id="scroll-bottom-btn" class="scroll-btn" title="Scroll to bottom">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Split Divider -->
+      <div id="split-divider" class="split-divider hidden">
+        <div class="divider-handle"></div>
+      </div>
+
+      <!-- Kanban Panel -->
+      <div id="kanban-panel" class="kanban-side hidden">
+        <div class="kanban-header">
+          <span class="kanban-title">Vibe Kanban</span>
+          <div class="kanban-controls">
+            <button id="kanban-settings-btn" class="kanban-ctrl-btn" title="Settings">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+              </svg>
+            </button>
+            <button id="kanban-refresh-btn" class="kanban-ctrl-btn" title="Refresh">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+              </svg>
+            </button>
+            <button id="kanban-external-btn" class="kanban-ctrl-btn" title="Open in new tab">
+              <svg viewBox="0 0 24 24" width="18" height="18">
+                <path fill="currentColor" d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="kanban-content">
+          <iframe id="kanban-iframe" src="" frameborder="0" allow="clipboard-read; clipboard-write"></iframe>
+          <div id="kanban-placeholder" class="kanban-placeholder">
+            <div class="placeholder-content">
+              <svg viewBox="0 0 24 24" width="64" height="64">
+                <path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H7V7h4v10zm6 0h-4V7h4v10z"/>
+              </svg>
+              <h3>Vibe Kanban</h3>
+              <p>Configure the Kanban URL to get started</p>
+              <div class="kanban-url-setup">
+                <input type="text" id="kanban-url-input" placeholder="http://localhost:3000" value="http://localhost:3000">
+                <button id="kanban-connect-btn" class="btn-primary">Connect</button>
+              </div>
+              <p class="kanban-hint">Run <code>npx vibe-kanban</code> to start the Kanban server</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vibe-Claude Quick Commands (Optional) -->
+    <div class="vibe-claude-bar hidden" id="vibe-claude-bar">
+      <div class="vibe-header">
+        <span class="vibe-title">Vibe-Claude</span>
+        <button class="vibe-toggle-btn" id="vibe-toggle-btn" title="Hide Vibe-Claude">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="vibe-commands">
+        <button class="vibe-cmd" data-cmd="/vibe " title="Start a vibe task">
+          <span class="cmd-icon">🚀</span>
+          <span class="cmd-label">/vibe</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-status" title="Check task status">
+          <span class="cmd-icon">📊</span>
+          <span class="cmd-label">/v-status</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-plan " title="Plan a task">
+          <span class="cmd-icon">📋</span>
+          <span class="cmd-label">/v-plan</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-continue" title="Continue current task">
+          <span class="cmd-icon">▶️</span>
+          <span class="cmd-label">/v-continue</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-compress" title="Compress session">
+          <span class="cmd-icon">🗜️</span>
+          <span class="cmd-label">/v-compress</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-checkpoint " title="Save checkpoint">
+          <span class="cmd-icon">💾</span>
+          <span class="cmd-label">/v-checkpoint</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-memory" title="View AI memory">
+          <span class="cmd-icon">🧠</span>
+          <span class="cmd-label">/v-memory</span>
+        </button>
+        <button class="vibe-cmd" data-cmd="/v-help" title="Show help">
+          <span class="cmd-icon">❓</span>
+          <span class="cmd-label">/v-help</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions Keyboard -->
+    <div class="quick-keyboard" id="quick-keyboard">
+      <!-- Layout Toggle -->
+      <div class="keyboard-header">
+        <button class="layout-toggle" id="layout-toggle" title="Change layout">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M3 5v14h18V5H3zm4 2v2H5V7h2zm-2 6v-2h2v2H5zm0 2h2v2H5v-2zm14 2H7v-2h12v2zm0-4H9v-2h10v2zm0-4h-8V7h8v2z"/>
+          </svg>
+        </button>
+        <button class="vibe-enable-btn" id="vibe-enable-btn" title="Enable Vibe-Claude commands">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+        </button>
+        <span class="keyboard-title">Quick Actions</span>
+        <button class="keyboard-collapse" id="keyboard-collapse" title="Collapse">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Keyboard Grid - Calculator Style -->
+      <div class="keyboard-grid" id="keyboard-grid" data-layout="default">
+        <!-- Row 1: Response Actions -->
+        <button class="key-btn key-yes" data-action="yes">✓ Yes</button>
+        <button class="key-btn key-no" data-action="no">✗ No</button>
+        <button class="key-btn key-enter" data-action="enter">↵ Enter</button>
+        <button class="key-btn key-tab" data-action="tab">Tab</button>
+
+        <!-- Row 2: Navigation -->
+        <button class="key-btn key-nav" data-action="home">⇤</button>
+        <button class="key-btn key-nav" data-action="up">↑</button>
+        <button class="key-btn key-nav" data-action="end">⇥</button>
+        <button class="key-btn key-danger" data-action="ctrl-c">^C</button>
+
+        <!-- Row 3: More Navigation -->
+        <button class="key-btn key-nav" data-action="left">←</button>
+        <button class="key-btn key-nav" data-action="down">↓</button>
+        <button class="key-btn key-nav" data-action="right">→</button>
+        <button class="key-btn key-ctrl" data-action="ctrl-d">^D</button>
+
+        <!-- Row 4: Edit Actions -->
+        <button class="key-btn key-edit" data-action="backspace">⌫</button>
+        <button class="key-btn key-edit" data-action="delete">Del</button>
+        <button class="key-btn key-edit" data-action="delete-word">⌫W</button>
+        <button class="key-btn key-ctrl" data-action="ctrl-z">^Z</button>
+
+        <!-- Row 5: Utility -->
+        <button class="key-btn key-util" data-action="space">Space</button>
+        <button class="key-btn key-util" data-action="esc">Esc</button>
+        <button class="key-btn key-util" data-action="ctrl-l">Clear</button>
+        <button class="key-btn key-util" data-action="ctrl-r">🔍</button>
+      </div>
+
+      <!-- Compact Layout (Hidden by default) -->
+      <div class="keyboard-compact hidden" id="keyboard-compact">
+        <button class="key-btn key-yes" data-action="yes">✓</button>
+        <button class="key-btn key-no" data-action="no">✗</button>
+        <button class="key-btn key-enter" data-action="enter">↵</button>
+        <button class="key-btn key-nav" data-action="up">↑</button>
+        <button class="key-btn key-nav" data-action="down">↓</button>
+        <button class="key-btn key-danger" data-action="ctrl-c">^C</button>
+        <button class="key-btn key-tab" data-action="tab">⇥</button>
+        <button class="key-btn key-edit" data-action="backspace">⌫</button>
+      </div>
+
+      <!-- Minimal Layout (Hidden by default) -->
+      <div class="keyboard-minimal hidden" id="keyboard-minimal">
+        <button class="key-btn key-yes wide" data-action="yes">✓ Yes</button>
+        <button class="key-btn key-no wide" data-action="no">✗ No</button>
+        <button class="key-btn key-enter wide" data-action="enter">↵ Enter</button>
+        <button class="key-btn key-danger wide" data-action="ctrl-c">^C Cancel</button>
+      </div>
+    </div>
+
+    <!-- Input Bar with Voice Controls -->
+    <div class="input-bar">
+      <button id="voice-btn" class="voice-btn" title="Voice input (speak command)">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="currentColor" d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+        </svg>
+      </button>
+      <input type="text" id="command-input" placeholder="Type command..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <button id="auto-enter-btn" class="auto-enter-btn active" title="Toggle auto-enter (currently ON)">
+        <span class="enter-icon">↵</span>
+      </button>
+      <button id="send-btn" class="send-btn" title="Send command">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+      <button id="tts-btn" class="tts-btn" title="Read output aloud">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Sessions Panel -->
+  <div id="sessions-panel" class="panel hidden">
+    <div class="panel-header">
+      <h2>Sessions</h2>
+      <button id="close-sessions-btn" class="close-btn">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+    <div id="sessions-list" class="sessions-list"></div>
+    <button id="panel-new-session" class="btn-primary">New Session</button>
+  </div>
+
+  <!-- Overlay -->
+  <div id="overlay" class="overlay hidden"></div>
+
+  <!-- Connection Status -->
+  <div id="connection-status" class="connection-status">
+    <span class="status-dot"></span>
+    <span class="status-text">Connecting...</span>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+  <script src="terminal.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
