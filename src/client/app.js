@@ -452,23 +452,9 @@ class TerminalRemoteApp {
     // TTS button
     this.ttsBtn?.addEventListener('click', () => this.toggleTTS());
 
-    // Auto-enter button - use both click and touchend for Safari compatibility
+    // Auto-enter button - enhanced for Chrome & Safari compatibility
     if (this.autoEnterBtn) {
-      // Use touchend for mobile Safari (more reliable)
-      let touchHandled = false;
-      this.autoEnterBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        touchHandled = true;
-        this.toggleAutoEnter();
-        // Reset flag after short delay
-        setTimeout(() => { touchHandled = false; }, 300);
-      }, { passive: false });
-      // Click for desktop
-      this.autoEnterBtn.addEventListener('click', (e) => {
-        if (!touchHandled) {
-          this.toggleAutoEnter();
-        }
-      });
+      this.setupAutoEnterButton();
     }
 
     // Handle visibility change for reconnection
@@ -648,12 +634,91 @@ class TerminalRemoteApp {
     }
   }
 
+  // Setup auto-enter button with cross-browser support
+  setupAutoEnterButton() {
+    const btn = this.autoEnterBtn;
+    if (!btn) return;
+
+    let isPressed = false;
+    let touchStartTime = 0;
+
+    // Prevent context menu on long press
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Handle touch start - for visual feedback
+    btn.addEventListener('touchstart', (e) => {
+      isPressed = true;
+      touchStartTime = Date.now();
+      btn.classList.add('pressing');
+    }, { passive: true });
+
+    // Handle touch end - main action for mobile
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (isPressed) {
+        const touchDuration = Date.now() - touchStartTime;
+        // Only trigger if it was a quick tap (not a long press)
+        if (touchDuration < 500) {
+          this.toggleAutoEnter();
+        }
+      }
+
+      isPressed = false;
+      btn.classList.remove('pressing');
+    }, { passive: false });
+
+    // Handle touch cancel
+    btn.addEventListener('touchcancel', () => {
+      isPressed = false;
+      btn.classList.remove('pressing');
+    }, { passive: true });
+
+    // Handle pointer events (works for mouse & touch on modern browsers)
+    if (window.PointerEvent) {
+      btn.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse') {
+          isPressed = true;
+          btn.classList.add('pressing');
+        }
+      });
+
+      btn.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'mouse' && isPressed) {
+          this.toggleAutoEnter();
+        }
+        isPressed = false;
+        btn.classList.remove('pressing');
+      });
+    } else {
+      // Fallback for older browsers - use click
+      btn.addEventListener('click', (e) => {
+        // Only handle if not from touch (touch already handled above)
+        if (!e.sourceCapabilities?.firesTouchEvents) {
+          this.toggleAutoEnter();
+        }
+      });
+    }
+
+    // Keyboard accessibility
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        this.toggleAutoEnter();
+      }
+    });
+  }
+
   toggleAutoEnter() {
     this.autoEnter = !this.autoEnter;
     this.setSafeStorage('auto-enter', this.autoEnter ? 'true' : 'false');
     this.updateAutoEnterButton();
     // Vibrate for feedback
     this.vibrate();
+    // Visual flash feedback
+    this.autoEnterBtn?.classList.add('toggled');
+    setTimeout(() => this.autoEnterBtn?.classList.remove('toggled'), 200);
     console.log('Auto-enter toggled:', this.autoEnter);
   }
 
@@ -661,10 +726,12 @@ class TerminalRemoteApp {
     if (this.autoEnterBtn) {
       if (this.autoEnter) {
         this.autoEnterBtn.classList.add('active');
-        this.autoEnterBtn.title = 'Auto-enter ON (click to send without Enter)';
+        this.autoEnterBtn.setAttribute('aria-pressed', 'true');
+        this.autoEnterBtn.title = 'Auto-enter ON - tap to turn OFF';
       } else {
         this.autoEnterBtn.classList.remove('active');
-        this.autoEnterBtn.title = 'Auto-enter OFF (click to send with Enter)';
+        this.autoEnterBtn.setAttribute('aria-pressed', 'false');
+        this.autoEnterBtn.title = 'Auto-enter OFF - tap to turn ON';
       }
     }
   }

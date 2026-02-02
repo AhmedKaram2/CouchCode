@@ -1478,23 +1478,56 @@ body {
   align-items: center;
   justify-content: center;
   background: var(--surface-light);
-  border: 1px solid var(--border-color);
+  border: 2px solid var(--border-color);
   border-radius: 50%;
   color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
   font-size: 1rem;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.auto-enter-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .auto-enter-btn.active {
   background: var(--primary-color);
   border-color: var(--primary-color);
   color: white;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.auto-enter-btn.active:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+/* Pressing state - visual feedback for touch */
+.auto-enter-btn.pressing {
+  transform: scale(0.9);
+  opacity: 0.8;
+}
+
+/* Toggle animation flash */
+.auto-enter-btn.toggled {
+  animation: toggleFlash 0.2s ease;
+}
+
+@keyframes toggleFlash {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
 }
 
 .auto-enter-btn .enter-icon {
   font-weight: bold;
+  pointer-events: none;
 }
 
 /* ==================== SESSIONS PANEL ==================== */
