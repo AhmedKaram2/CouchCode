@@ -176,6 +176,40 @@ CouchCode/
 └── dist/               # Generated installers
 ```
 
+## 📸 Screenshots
+
+<div align="center">
+
+### Desktop App
+<img src="screenshots/desktop-main.png" alt="Desktop Main Window" width="700"/>
+<p><em>Main desktop window with QR code for easy mobile connection</em></p>
+
+### Mobile Terminal
+<table>
+  <tr>
+    <td align="center">
+      <img src="screenshots/mobile-terminal.png" alt="Mobile Terminal" width="280"/>
+      <p><em>Full terminal access from your phone</em></p>
+    </td>
+    <td align="center">
+      <img src="screenshots/mobile-keyboard.png" alt="Quick Keyboard" width="280"/>
+      <p><em>Calculator-style quick action keyboard</em></p>
+    </td>
+  </tr>
+</table>
+
+### Claude Code Integration
+<img src="screenshots/claude-code.png" alt="Claude Code Integration" width="350"/>
+<p><em>Quick access to AI coding assistant</em></p>
+
+### Split View with Kanban
+<img src="screenshots/split-kanban.png" alt="Split View Kanban" width="700"/>
+<p><em>Terminal + Vibe-Kanban side by side</em></p>
+
+</div>
+
+> **Note:** To add your own screenshots, save images to the `screenshots/` folder and they'll appear here.
+
 ## 🤝 Contributing
 
 Contributions are welcome! 
