@@ -15,6 +15,9 @@ const sessionsList = document.getElementById('sessions-list');
 const toggleServerBtn = document.getElementById('toggle-server');
 const quitAppBtn = document.getElementById('quit-app');
 const toast = document.getElementById('toast');
+const autoUpdateCheckbox = document.getElementById('auto-update');
+const checkUpdateBtn = document.getElementById('check-update');
+const updateStatus = document.getElementById('update-status');
 
 // State
 let isServerRunning = false;
@@ -42,6 +45,38 @@ async function loadSettings() {
   portInput.value = settings.port;
   startLoginCheckbox.checked = settings.startOnLogin;
   startMinimizedCheckbox.checked = settings.startMinimized;
+
+  // Load auto-update setting
+  const autoUpdateEnabled = settings.autoUpdateEnabled !== false;
+  if (autoUpdateCheckbox) {
+    autoUpdateCheckbox.checked = autoUpdateEnabled;
+  }
+
+  // Load update status
+  await updateUpdateStatus();
+}
+
+// Update status display
+async function updateUpdateStatus() {
+  if (!updateStatus) return;
+
+  const status = await ipcRenderer.invoke('get-update-status');
+
+  if (status.checking) {
+    updateStatus.innerHTML = `<span class="status-checking">Checking for updates...</span>`;
+  } else if (status.downloaded) {
+    updateStatus.innerHTML = `
+      <span class="status-ready">Update v${status.version} ready to install</span>
+      <button id="install-now" class="btn-primary">Restart & Install</button>
+    `;
+    document.getElementById('install-now')?.addEventListener('click', async () => {
+      await ipcRenderer.invoke('install-update');
+    });
+  } else if (status.available) {
+    updateStatus.innerHTML = `<span class="status-downloading">Downloading v${status.version} (${status.progress}%)</span>`;
+  } else {
+    updateStatus.innerHTML = `<span class="status-current">Current version: ${status.currentVersion}</span>`;
+  }
 }
 
 // Update server status
@@ -192,6 +227,38 @@ function setupEventListeners() {
     });
   });
 
+  // Auto-update toggle
+  if (autoUpdateCheckbox) {
+    autoUpdateCheckbox.addEventListener('change', async () => {
+      await ipcRenderer.invoke('toggle-auto-update', autoUpdateCheckbox.checked);
+      showToast(
+        autoUpdateCheckbox.checked ? 'Auto-update enabled' : 'Auto-update disabled',
+        'success'
+      );
+    });
+  }
+
+  // Check for updates button
+  if (checkUpdateBtn) {
+    checkUpdateBtn.addEventListener('click', async () => {
+      checkUpdateBtn.disabled = true;
+      checkUpdateBtn.textContent = 'Checking...';
+
+      const result = await ipcRenderer.invoke('check-for-updates');
+
+      checkUpdateBtn.disabled = false;
+      checkUpdateBtn.textContent = 'Check for Updates';
+
+      if (result.success) {
+        showToast('Checked for updates', 'success');
+      } else {
+        showToast('Failed to check for updates', 'error');
+      }
+
+      await updateUpdateStatus();
+    });
+  }
+
   // Quit app
   quitAppBtn.addEventListener('click', () => {
     const { app } = require('@electron/remote') || {};
@@ -207,6 +274,26 @@ function setupEventListeners() {
     isServerRunning = running;
     await updateServerStatus();
     await updateQRCode();
+  });
+
+  // Listen for update events from main process
+  ipcRenderer.on('update-available', async (event, info) => {
+    showToast(`Update v${info.version} is downloading...`, 'info');
+    await updateUpdateStatus();
+  });
+
+  ipcRenderer.on('update-downloaded', async (event, info) => {
+    showToast(`Update v${info.version} ready to install!`, 'success');
+    await updateUpdateStatus();
+  });
+
+  ipcRenderer.on('update-download-progress', async (event, progress) => {
+    await updateUpdateStatus();
+  });
+
+  ipcRenderer.on('update-error', async (event, error) => {
+    showToast('Update check failed', 'error');
+    await updateUpdateStatus();
   });
 }
 

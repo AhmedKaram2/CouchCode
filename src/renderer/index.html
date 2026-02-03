@@ -8,6 +8,20 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Update Banner -->
+  <div id="update-banner" class="update-banner hidden">
+    <div class="banner-content">
+      <svg class="banner-icon" viewBox="0 0 24 24" width="20" height="20">
+        <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+      <span id="banner-message">Update available</span>
+    </div>
+    <div class="banner-actions">
+      <button id="banner-install" class="banner-btn primary">Restart & Install</button>
+      <button id="banner-dismiss" class="banner-btn secondary">Later</button>
+    </div>
+  </div>
+
   <div class="app-container">
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -215,6 +229,24 @@
               <input type="checkbox" id="start-minimized">
               <span>Start minimized to tray</span>
             </label>
+          </div>
+        </div>
+        <!-- Auto-Update -->
+        <div class="setting-section">
+          <h4>Auto-Update</h4>
+          <div class="setting-row checkbox-row">
+            <label>
+              <input type="checkbox" id="auto-update" checked>
+              <span>Automatically download and install updates</span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <button id="check-update" class="btn-secondary">Check for Updates</button>
+          </div>
+          <div class="setting-row">
+            <div id="update-status" class="update-status">
+              <span class="status-current">Checking...</span>
+            </div>
           </div>
         </div>
       </div>

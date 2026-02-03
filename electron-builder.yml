@@ -63,6 +63,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+  differentialPackage: true
 
 linux:
   icon: build/icon.png
@@ -91,4 +92,7 @@ deb:
 
 publish:
   provider: github
+  owner: AhmedKaram2
+  repo: CouchCode
   releaseType: release
+  publishAutoUpdate: true

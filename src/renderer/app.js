@@ -163,6 +163,12 @@ const startMinimizedCheckbox = document.getElementById('start-minimized');
 const shellSelect = document.getElementById('shell-select');
 const toast = document.getElementById('toast');
 
+// Update banner elements
+const updateBanner = document.getElementById('update-banner');
+const bannerMessage = document.getElementById('banner-message');
+const bannerInstall = document.getElementById('banner-install');
+const bannerDismiss = document.getElementById('banner-dismiss');
+
 // Available shells
 let availableShells = [];
 
@@ -657,6 +663,30 @@ function setupEventListeners() {
       // Close modal on background click
       if (e.target === claudeCodeModal) {
         hideClaudeCodeModal();
+      }
+    });
+  }
+
+  // Update banner handling
+  ipcRenderer.on('update-downloaded', (event, info) => {
+    if (updateBanner && bannerMessage) {
+      bannerMessage.textContent = `Version ${info.version} is ready to install`;
+      updateBanner.classList.remove('hidden');
+    }
+  });
+
+  // Install button
+  if (bannerInstall) {
+    bannerInstall.addEventListener('click', async () => {
+      await ipcRenderer.invoke('install-update');
+    });
+  }
+
+  // Dismiss button
+  if (bannerDismiss) {
+    bannerDismiss.addEventListener('click', () => {
+      if (updateBanner) {
+        updateBanner.classList.add('hidden');
       }
     });
   }

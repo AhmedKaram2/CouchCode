@@ -12,7 +12,10 @@ const store = new Store({
     startMinimized: false,
     cloudRelayEnabled: false,
     preferredShell: null,
-    commandHistory: []
+    commandHistory: [],
+    autoUpdateEnabled: true,
+    lastUpdateCheck: null,
+    skipVersion: null
   }
 });
 
@@ -115,6 +118,27 @@ const config = {
     const history = store.get('commandHistory') || [];
     if (!query) return history.slice(0, 10);
     return history.filter(cmd => cmd.toLowerCase().includes(query.toLowerCase())).slice(0, 10);
+  },
+
+  // Auto-update settings
+  getAutoUpdateEnabled() {
+    return store.get('autoUpdateEnabled') !== false; // Default true
+  },
+
+  setAutoUpdateEnabled(enabled) {
+    store.set('autoUpdateEnabled', !!enabled);
+  },
+
+  getSkipVersion() {
+    return store.get('skipVersion');
+  },
+
+  setSkipVersion(version) {
+    store.set('skipVersion', version);
+  },
+
+  updateLastCheckTime() {
+    store.set('lastUpdateCheck', new Date().toISOString());
   }
 };
 

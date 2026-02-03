@@ -2,6 +2,7 @@ const { Tray, Menu, nativeImage, app } = require('electron');
 const path = require('path');
 const os = require('os');
 const server = require('./server');
+const updater = require('./updater');
 
 class TrayManager {
   constructor(mainWindow) {
@@ -143,8 +144,9 @@ class TrayManager {
   updateMenu() {
     const isRunning = server.isRunning();
     const clientCount = server.getClientCount();
+    const updateStatus = updater.getStatus();
 
-    const contextMenu = Menu.buildFromTemplate([
+    const menuTemplate = [
       {
         label: `CouchCode`,
         enabled: false
@@ -154,48 +156,86 @@ class TrayManager {
         label: isRunning ? `Server Running (${clientCount} connected)` : 'Server Stopped',
         enabled: false
       },
-      { type: 'separator' },
-      {
-        label: isRunning ? 'Stop Server' : 'Start Server',
-        click: async () => {
-          if (isRunning) {
-            await server.stop();
-          } else {
-            await server.start();
-          }
-          this.updateMenu();
-          if (this.mainWindow) {
-            this.mainWindow.webContents.send('server-status-changed', server.isRunning());
-          }
-        }
-      },
-      {
-        label: 'Show Window',
+      { type: 'separator' }
+    ];
+
+    // Add update menu items if update is available or downloaded
+    if (updateStatus.checking) {
+      menuTemplate.push({
+        label: 'Checking for updates...',
+        enabled: false
+      });
+      menuTemplate.push({ type: 'separator' });
+    } else if (updateStatus.downloaded) {
+      menuTemplate.push({
+        label: `Update Ready (v${updateStatus.version})`,
+        enabled: false
+      });
+      menuTemplate.push({
+        label: 'Restart to Install',
         click: () => {
-          if (this.mainWindow) {
-            this.mainWindow.show();
-            this.mainWindow.focus();
-          }
+          updater.installUpdate();
         }
-      },
-      { type: 'separator' },
-      {
-        label: 'Quit',
-        click: () => {
-          const { app } = require('electron');
-          app.quit();
+      });
+      menuTemplate.push({ type: 'separator' });
+    } else if (updateStatus.available) {
+      menuTemplate.push({
+        label: `Downloading update ${updateStatus.progress}%`,
+        enabled: false
+      });
+      menuTemplate.push({ type: 'separator' });
+    }
+
+    // Server controls
+    menuTemplate.push({
+      label: isRunning ? 'Stop Server' : 'Start Server',
+      click: async () => {
+        if (isRunning) {
+          await server.stop();
+        } else {
+          await server.start();
+        }
+        this.updateMenu();
+        if (this.mainWindow) {
+          this.mainWindow.webContents.send('server-status-changed', server.isRunning());
         }
       }
-    ]);
+    });
 
+    menuTemplate.push({
+      label: 'Show Window',
+      click: () => {
+        if (this.mainWindow) {
+          this.mainWindow.show();
+          this.mainWindow.focus();
+        }
+      }
+    });
+
+    menuTemplate.push({ type: 'separator' });
+
+    menuTemplate.push({
+      label: 'Quit',
+      click: () => {
+        const { app } = require('electron');
+        app.quit();
+      }
+    });
+
+    const contextMenu = Menu.buildFromTemplate(menuTemplate);
     this.tray.setContextMenu(contextMenu);
 
     // Update tooltip
+    let tooltip = 'CouchCode';
     if (isRunning) {
-      this.tray.setToolTip(`CouchCode - Running (${clientCount} connected)`);
+      tooltip += ` - Running (${clientCount} connected)`;
     } else {
-      this.tray.setToolTip('CouchCode - Stopped');
+      tooltip += ' - Stopped';
     }
+    if (updateStatus.downloaded) {
+      tooltip += ' - Update Ready!';
+    }
+    this.tray.setToolTip(tooltip);
   }
 
   // Destroy tray

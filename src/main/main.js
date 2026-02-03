@@ -5,6 +5,7 @@ const server = require('./server');
 const config = require('./config');
 const TrayManager = require('./tray');
 const ptyManager = require('./pty-manager');
+const updater = require('./updater');
 
 // Platform detection
 const platform = os.platform(); // 'win32', 'darwin', 'linux'
@@ -174,6 +175,17 @@ app.whenReady().then(async () => {
       trayManager.updateMenu();
     }
   }, 5000);
+
+  // Initialize updater
+  updater.setMainWindow(mainWindow);
+  updater.setTrayManager(trayManager);
+
+  // Check for updates on startup (if enabled)
+  if (config.get('autoUpdateEnabled') !== false) {
+    setTimeout(() => {
+      updater.checkForUpdates(true); // silent check
+    }, 3000);
+  }
 });
 
 // Handle window activation on macOS
@@ -357,4 +369,33 @@ ipcMain.handle('toggle-power-save-blocker', (event, enable) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+
+// Update-related IPC handlers
+ipcMain.handle('get-update-status', () => {
+  return updater.getStatus();
+});
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const result = await updater.checkForUpdates(false); // not silent
+    return { success: true, result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('install-update', () => {
+  updater.installUpdate();
+  return { success: true };
+});
+
+ipcMain.handle('skip-update-version', (event, version) => {
+  updater.skipVersion(version);
+  return { success: true };
+});
+
+ipcMain.handle('toggle-auto-update', (event, enabled) => {
+  config.setAutoUpdateEnabled(enabled);
+  return { success: true, enabled };
 });
