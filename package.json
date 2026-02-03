@@ -1,6 +1,6 @@
 {
   "name": "couchcode",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Code from your couch - Control your terminal remotely from any device",
   "main": "src/main/main.js",
   "author": "Ahmed Karam",

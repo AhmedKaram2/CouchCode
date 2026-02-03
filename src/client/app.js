@@ -456,8 +456,15 @@ class TerminalRemoteApp {
 
     // Handle visibility change for reconnection
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && !this.isConnected()) {
-        this.connect();
+      if (document.visibilityState === 'visible') {
+        if (!this.isConnected()) {
+          // WebSocket disconnected, reconnect
+          this.connect();
+        } else if (this.authenticated && this.currentSessionId) {
+          // Still connected but was in background, re-attach to ensure session is active
+          console.log('App visible again, re-attaching to session:', this.currentSessionId);
+          this.attachToSession(this.currentSessionId);
+        }
       }
     });
 
@@ -1293,9 +1300,16 @@ class TerminalRemoteApp {
         console.log('Sessions update received:', data.sessions);
         this.sessions = data.sessions || [];
         this.updateSessionsList();
-        if (this.sessions.length > 0 && !this.currentSessionId) {
-          this.attachToSession(this.sessions[0].id);
-        } else if (this.sessions.length === 0 && this.currentSessionId) {
+        if (this.sessions.length > 0) {
+          if (!this.currentSessionId) {
+            this.attachToSession(this.sessions[0].id);
+          } else if (!this.sessions.some(s => s.id === this.currentSessionId)) {
+            // Current session was deleted, switch to first available
+            console.log('Current session deleted, switching to:', this.sessions[0].id);
+            this.currentSessionId = null;
+            this.attachToSession(this.sessions[0].id);
+          }
+        } else if (this.currentSessionId) {
           this.currentSessionId = null;
           this.showNoSession();
         }
@@ -1371,11 +1385,28 @@ class TerminalRemoteApp {
       this.sessions = data.sessions || [];
       this.updateSessionsList();
 
-      if (this.sessions.length > 0 && !this.currentSessionId) {
-        console.log('Attaching to first session:', this.sessions[0].id);
-        this.attachToSession(this.sessions[0].id);
-      } else if (this.sessions.length === 0) {
+      if (this.sessions.length > 0) {
+        // Check if we have a current session that still exists
+        const currentSessionExists = this.currentSessionId &&
+          this.sessions.some(s => s.id === this.currentSessionId);
+
+        if (currentSessionExists) {
+          // Re-attach to current session after reconnection
+          console.log('Re-attaching to current session:', this.currentSessionId);
+          this.attachToSession(this.currentSessionId);
+        } else if (!this.currentSessionId) {
+          // No current session, attach to first available
+          console.log('Attaching to first session:', this.sessions[0].id);
+          this.attachToSession(this.sessions[0].id);
+        } else {
+          // Current session no longer exists, attach to first available
+          console.log('Current session no longer exists, attaching to:', this.sessions[0].id);
+          this.currentSessionId = null;
+          this.attachToSession(this.sessions[0].id);
+        }
+      } else {
         console.log('No sessions found');
+        this.currentSessionId = null;
         this.showNoSession();
       }
     } catch (error) {
@@ -1454,26 +1485,50 @@ class TerminalRemoteApp {
   }
 
   sendInput(data) {
-    if (this.isConnected() && this.currentSessionId) {
-      console.log('Sending input:', JSON.stringify(data), 'to session:', this.currentSessionId);
-      this.ws.send(JSON.stringify({ type: 'input', data }));
-      this.hideSmartPrompt();
+    if (!this.isConnected()) {
+      console.warn('sendInput: not connected, attempting reconnect');
+      this.connect();
+      return false;
     }
+    if (!this.currentSessionId) {
+      console.warn('sendInput: no session attached, attempting to load sessions');
+      this.loadSessions();
+      return false;
+    }
+    console.log('Sending input:', JSON.stringify(data), 'to session:', this.currentSessionId);
+    this.ws.send(JSON.stringify({ type: 'input', data }));
+    this.hideSmartPrompt();
+    return true;
   }
 
   sendCommand() {
     const command = this.commandInput.value;
-    if (command && this.currentSessionId) {
-      // Add to history
-      if (command.trim()) {
-        this.addToHistory(command.trim());
-      }
-      // Track command start time for notifications
-      this.trackCommandStart();
-      // Send with or without Enter based on autoEnter setting
-      this.sendInput(this.autoEnter ? command + '\r' : command);
-      this.commandInput.value = '';
+    if (!command) return;
+
+    // Check if we can send
+    if (!this.isConnected()) {
+      console.warn('Cannot send command: not connected');
+      // Try to reconnect
+      this.connect();
+      return;
     }
+
+    if (!this.currentSessionId) {
+      console.warn('Cannot send command: no session attached');
+      // Try to load sessions and attach
+      this.loadSessions();
+      return;
+    }
+
+    // Add to history
+    if (command.trim()) {
+      this.addToHistory(command.trim());
+    }
+    // Track command start time for notifications
+    this.trackCommandStart();
+    // Send with or without Enter based on autoEnter setting
+    this.sendInput(this.autoEnter ? command + '\r' : command);
+    this.commandInput.value = '';
   }
 
   sendResize(cols, rows) {
