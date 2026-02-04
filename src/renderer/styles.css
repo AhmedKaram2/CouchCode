@@ -807,8 +807,33 @@ body {
   color: #ffc107;
 }
 
+.tmux-notice.installing {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
 .tmux-notice.hidden {
   display: none;
+}
+
+.btn-install-tmux {
+  margin-left: auto;
+  padding: 6px 14px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn-install-tmux:hover {
+  background: var(--primary-hover);
+  transform: scale(1.02);
 }
 
 .setting-hint {

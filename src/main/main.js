@@ -385,6 +385,61 @@ ipcMain.handle('kill-tmux-session', (event, tmuxSessionName) => {
   return ptyManager.killTmuxSession(tmuxSessionName);
 });
 
+// Install tmux
+ipcMain.handle('install-tmux', async () => {
+  const { execSync } = require('child_process');
+  const platform = os.platform();
+
+  try {
+    let installCmd;
+
+    if (platform === 'darwin') {
+      // macOS - use Homebrew
+      // First check if brew is installed
+      try {
+        execSync('which brew', { encoding: 'utf8' });
+        installCmd = 'brew install tmux';
+      } catch (e) {
+        return { success: false, error: 'Homebrew not found. Please install Homebrew first: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' };
+      }
+    } else if (platform === 'linux') {
+      // Linux - detect package manager
+      try {
+        execSync('which apt-get', { encoding: 'utf8' });
+        installCmd = 'sudo apt-get update && sudo apt-get install -y tmux';
+      } catch (e) {
+        try {
+          execSync('which yum', { encoding: 'utf8' });
+          installCmd = 'sudo yum install -y tmux';
+        } catch (e2) {
+          try {
+            execSync('which pacman', { encoding: 'utf8' });
+            installCmd = 'sudo pacman -S --noconfirm tmux';
+          } catch (e3) {
+            return { success: false, error: 'Could not detect package manager. Please install tmux manually.' };
+          }
+        }
+      }
+    } else {
+      return { success: false, error: 'tmux installation is only supported on macOS and Linux.' };
+    }
+
+    console.log('Installing tmux with:', installCmd);
+    execSync(installCmd, { encoding: 'utf8', stdio: 'inherit' });
+
+    // Re-detect tmux after installation
+    const tmuxPath = ptyManager.detectTmux();
+    if (tmuxPath) {
+      return { success: true, message: 'tmux installed successfully!' };
+    } else {
+      return { success: false, error: 'Installation completed but tmux not found. Please restart the app.' };
+    }
+  } catch (error) {
+    console.error('Failed to install tmux:', error);
+    return { success: false, error: error.message || 'Installation failed. Please install tmux manually.' };
+  }
+});
+
 // Forward PTY output to renderer
 ptyManager.on('output', (sessionId, data) => {
   if (mainWindow && !mainWindow.isDestroyed()) {

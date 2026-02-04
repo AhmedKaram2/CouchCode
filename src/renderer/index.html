@@ -244,7 +244,12 @@
           <h4>Session Sharing</h4>
           <div id="tmux-unavailable" class="tmux-notice hidden">
             <span class="notice-icon">⚠️</span>
-            <span>tmux is not installed. Install it to enable session sharing.</span>
+            <span>tmux is not installed.</span>
+            <button id="install-tmux-btn" class="btn-install-tmux">Install tmux</button>
+          </div>
+          <div id="tmux-installing" class="tmux-notice installing hidden">
+            <span class="notice-icon">⏳</span>
+            <span>Installing tmux... This may take a minute.</span>
           </div>
           <div class="setting-row checkbox-row">
             <label>

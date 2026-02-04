@@ -16,12 +16,13 @@ class PTYManager extends EventEmitter {
     this.tmuxSessionPrefix = 'couchcode';
   }
 
-  // Detect if tmux is available
+  // Detect if tmux is available (also updates internal state)
   detectTmux() {
     try {
       const tmuxPath = execSync('which tmux 2>/dev/null').toString().trim();
       if (tmuxPath) {
         console.log('tmux detected at:', tmuxPath);
+        this.tmuxPath = tmuxPath;
         return tmuxPath;
       }
     } catch (e) {
@@ -33,11 +34,13 @@ class PTYManager extends EventEmitter {
     for (const p of commonPaths) {
       if (fs.existsSync(p)) {
         console.log('tmux detected at:', p);
+        this.tmuxPath = p;
         return p;
       }
     }
 
     console.log('tmux not found');
+    this.tmuxPath = null;
     return null;
   }
 

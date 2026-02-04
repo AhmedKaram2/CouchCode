@@ -165,6 +165,8 @@ const shellSelect = document.getElementById('shell-select');
 // Tmux session sharing elements
 const tmuxEnabledCheckbox = document.getElementById('tmux-enabled');
 const tmuxUnavailable = document.getElementById('tmux-unavailable');
+const tmuxInstalling = document.getElementById('tmux-installing');
+const installTmuxBtn = document.getElementById('install-tmux-btn');
 const tmuxSessionsList = document.getElementById('tmux-sessions-list');
 const tmuxSessionsContent = document.getElementById('tmux-sessions-content');
 const refreshTmuxSessionsBtn = document.getElementById('refresh-tmux-sessions');
@@ -1492,6 +1494,35 @@ async function killTmuxSession(sessionName) {
   }
 }
 
+// Install tmux
+async function installTmux() {
+  if (!installTmuxBtn) return;
+
+  // Show installing state
+  if (tmuxUnavailable) tmuxUnavailable.classList.add('hidden');
+  if (tmuxInstalling) tmuxInstalling.classList.remove('hidden');
+
+  try {
+    const result = await ipcRenderer.invoke('install-tmux');
+
+    if (result.success) {
+      showToast('tmux installed successfully!', 'success');
+      // Reload tmux status
+      setTimeout(() => loadTmuxStatus(), 1000);
+    } else {
+      showToast(result.error || 'Failed to install tmux', 'error');
+      // Show the unavailable notice again
+      if (tmuxUnavailable) tmuxUnavailable.classList.remove('hidden');
+    }
+  } catch (e) {
+    console.error('Failed to install tmux:', e);
+    showToast('Failed to install tmux: ' + e.message, 'error');
+    if (tmuxUnavailable) tmuxUnavailable.classList.remove('hidden');
+  } finally {
+    if (tmuxInstalling) tmuxInstalling.classList.add('hidden');
+  }
+}
+
 // Setup tmux event listeners
 if (tmuxEnabledCheckbox) {
   tmuxEnabledCheckbox.addEventListener('change', toggleTmuxMode);
@@ -1499,6 +1530,10 @@ if (tmuxEnabledCheckbox) {
 
 if (refreshTmuxSessionsBtn) {
   refreshTmuxSessionsBtn.addEventListener('click', loadTmuxStatus);
+}
+
+if (installTmuxBtn) {
+  installTmuxBtn.addEventListener('click', installTmux);
 }
 
 // QR code image load handler
