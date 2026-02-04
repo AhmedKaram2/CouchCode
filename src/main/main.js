@@ -385,59 +385,94 @@ ipcMain.handle('kill-tmux-session', (event, tmuxSessionName) => {
   return ptyManager.killTmuxSession(tmuxSessionName);
 });
 
-// Install tmux
+// Install tmux (async to not block UI)
 ipcMain.handle('install-tmux', async () => {
-  const { execSync } = require('child_process');
+  const { spawn, execSync } = require('child_process');
   const platform = os.platform();
 
-  try {
+  return new Promise((resolve) => {
     let installCmd;
+    let installArgs;
 
     if (platform === 'darwin') {
       // macOS - use Homebrew
-      // First check if brew is installed
       try {
         execSync('which brew', { encoding: 'utf8' });
-        installCmd = 'brew install tmux';
+        installCmd = '/opt/homebrew/bin/brew';
+        // Try common homebrew paths
+        if (!require('fs').existsSync(installCmd)) {
+          installCmd = '/usr/local/bin/brew';
+        }
+        if (!require('fs').existsSync(installCmd)) {
+          installCmd = 'brew';
+        }
+        installArgs = ['install', 'tmux'];
       } catch (e) {
-        return { success: false, error: 'Homebrew not found. Please install Homebrew first: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"' };
+        resolve({ success: false, error: 'Homebrew not found. Please install Homebrew first.' });
+        return;
       }
     } else if (platform === 'linux') {
       // Linux - detect package manager
       try {
         execSync('which apt-get', { encoding: 'utf8' });
-        installCmd = 'sudo apt-get update && sudo apt-get install -y tmux';
+        installCmd = 'sudo';
+        installArgs = ['apt-get', 'install', '-y', 'tmux'];
       } catch (e) {
         try {
           execSync('which yum', { encoding: 'utf8' });
-          installCmd = 'sudo yum install -y tmux';
+          installCmd = 'sudo';
+          installArgs = ['yum', 'install', '-y', 'tmux'];
         } catch (e2) {
-          try {
-            execSync('which pacman', { encoding: 'utf8' });
-            installCmd = 'sudo pacman -S --noconfirm tmux';
-          } catch (e3) {
-            return { success: false, error: 'Could not detect package manager. Please install tmux manually.' };
-          }
+          resolve({ success: false, error: 'Could not detect package manager. Please install tmux manually.' });
+          return;
         }
       }
     } else {
-      return { success: false, error: 'tmux installation is only supported on macOS and Linux.' };
+      resolve({ success: false, error: 'tmux installation is only supported on macOS and Linux.' });
+      return;
     }
 
-    console.log('Installing tmux with:', installCmd);
-    execSync(installCmd, { encoding: 'utf8', stdio: 'inherit' });
+    console.log('Installing tmux with:', installCmd, installArgs.join(' '));
 
-    // Re-detect tmux after installation
-    const tmuxPath = ptyManager.detectTmux();
-    if (tmuxPath) {
-      return { success: true, message: 'tmux installed successfully!' };
-    } else {
-      return { success: false, error: 'Installation completed but tmux not found. Please restart the app.' };
-    }
-  } catch (error) {
-    console.error('Failed to install tmux:', error);
-    return { success: false, error: error.message || 'Installation failed. Please install tmux manually.' };
-  }
+    const child = spawn(installCmd, installArgs, {
+      stdio: 'pipe',
+      env: { ...process.env, HOMEBREW_NO_AUTO_UPDATE: '1' }
+    });
+
+    let output = '';
+    let errorOutput = '';
+
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+      console.log('tmux install:', data.toString());
+    });
+
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+      console.log('tmux install stderr:', data.toString());
+    });
+
+    child.on('close', (code) => {
+      console.log('tmux install finished with code:', code);
+
+      // Re-detect tmux after installation
+      setTimeout(() => {
+        const tmuxPath = ptyManager.detectTmux();
+        if (tmuxPath) {
+          resolve({ success: true, message: 'tmux installed successfully!' });
+        } else if (code === 0) {
+          resolve({ success: true, message: 'Installation completed. Please restart the app.' });
+        } else {
+          resolve({ success: false, error: errorOutput || 'Installation failed. Please install tmux manually.' });
+        }
+      }, 1000);
+    });
+
+    child.on('error', (err) => {
+      console.error('Failed to install tmux:', err);
+      resolve({ success: false, error: err.message || 'Installation failed.' });
+    });
+  });
 });
 
 // Forward PTY output to renderer
