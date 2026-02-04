@@ -69,6 +69,15 @@
         <div id="sessions-list" class="sessions-list">
           <p class="no-sessions">No active sessions</p>
         </div>
+
+        <!-- Existing tmux sessions -->
+        <div id="existing-tmux-section" class="existing-tmux-section hidden">
+          <div class="section-subheader">
+            <span>System tmux Sessions</span>
+            <button id="refresh-system-tmux" class="btn-icon-xs" title="Refresh">🔄</button>
+          </div>
+          <div id="existing-tmux-list" class="existing-tmux-list"></div>
+        </div>
       </section>
 
       <!-- Server Controls -->

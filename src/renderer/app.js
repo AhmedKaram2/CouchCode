@@ -170,6 +170,11 @@ const installTmuxBtn = document.getElementById('install-tmux-btn');
 const tmuxSessionsList = document.getElementById('tmux-sessions-list');
 const tmuxSessionsContent = document.getElementById('tmux-sessions-content');
 const refreshTmuxSessionsBtn = document.getElementById('refresh-tmux-sessions');
+
+// Existing system tmux sessions elements
+const existingTmuxSection = document.getElementById('existing-tmux-section');
+const existingTmuxList = document.getElementById('existing-tmux-list');
+const refreshSystemTmuxBtn = document.getElementById('refresh-system-tmux');
 const toast = document.getElementById('toast');
 
 // Update banner elements
@@ -550,6 +555,11 @@ async function init() {
   // Load tmux status
   if (typeof loadTmuxStatus === 'function') {
     loadTmuxStatus();
+  }
+
+  // Load existing tmux sessions in sidebar
+  if (typeof loadExistingTmuxSessions === 'function') {
+    loadExistingTmuxSessions();
   }
 
   // Poll for updates
@@ -1534,6 +1544,64 @@ if (refreshTmuxSessionsBtn) {
 
 if (installTmuxBtn) {
   installTmuxBtn.addEventListener('click', installTmux);
+}
+
+if (refreshSystemTmuxBtn) {
+  refreshSystemTmuxBtn.addEventListener('click', loadExistingTmuxSessions);
+}
+
+// Load existing system tmux sessions for sidebar
+async function loadExistingTmuxSessions() {
+  try {
+    const status = await ipcRenderer.invoke('get-tmux-status');
+
+    if (!status.available) {
+      if (existingTmuxSection) existingTmuxSection.classList.add('hidden');
+      return;
+    }
+
+    const sessions = status.sessions || [];
+
+    if (sessions.length > 0) {
+      if (existingTmuxSection) existingTmuxSection.classList.remove('hidden');
+      renderExistingTmuxSessions(sessions);
+    } else {
+      if (existingTmuxSection) existingTmuxSection.classList.add('hidden');
+    }
+  } catch (e) {
+    console.error('Failed to load existing tmux sessions:', e);
+  }
+}
+
+// Render existing tmux sessions in sidebar
+function renderExistingTmuxSessions(sessions) {
+  if (!existingTmuxList) return;
+
+  existingTmuxList.innerHTML = sessions.map(s => `
+    <div class="existing-tmux-item" data-session="${escapeHtml(s.name)}">
+      <div class="existing-tmux-info">
+        <span class="existing-tmux-name">🖥️ ${escapeHtml(s.name)}</span>
+        <span class="existing-tmux-status">${s.attached ? '🟢 attached' : '⚪ available'}</span>
+      </div>
+      <button class="btn-attach-tmux" data-session="${escapeHtml(s.name)}" title="Attach to this session">
+        Connect
+      </button>
+    </div>
+  `).join('');
+
+  // Add click handlers
+  existingTmuxList.querySelectorAll('.btn-attach-tmux').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      attachToTmuxSession(btn.dataset.session);
+    });
+  });
+
+  existingTmuxList.querySelectorAll('.existing-tmux-item').forEach(item => {
+    item.addEventListener('click', () => {
+      attachToTmuxSession(item.dataset.session);
+    });
+  });
 }
 
 // QR code image load handler

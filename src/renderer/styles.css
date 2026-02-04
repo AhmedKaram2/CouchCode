@@ -930,6 +930,108 @@ body {
   font-size: 0.8125rem;
 }
 
+/* Existing tmux sessions in sidebar */
+.existing-tmux-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.existing-tmux-section.hidden {
+  display: none;
+}
+
+.section-subheader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-icon-xs {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s;
+}
+
+.btn-icon-xs:hover {
+  background: var(--surface-elevated);
+}
+
+.existing-tmux-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.existing-tmux-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.existing-tmux-item:hover {
+  border-color: var(--primary-color);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.existing-tmux-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.existing-tmux-name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.existing-tmux-status {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+
+.btn-attach-tmux {
+  padding: 5px 10px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-attach-tmux:hover {
+  background: var(--primary-hover);
+}
+
 /* Toast */
 .toast {
   position: fixed;
