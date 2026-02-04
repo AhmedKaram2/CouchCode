@@ -158,6 +158,10 @@ app.whenReady().then(async () => {
     startPowerSaveBlocker();
   }
 
+  // Load tmux setting
+  const tmuxEnabled = config.get('tmuxEnabled') || false;
+  ptyManager.setTmuxEnabled(tmuxEnabled);
+
   // Auto-start server
   try {
     await server.start();
@@ -343,6 +347,42 @@ ipcMain.handle('terminal-input', (event, sessionId, data) => {
 // Terminal resize
 ipcMain.handle('terminal-resize', (event, sessionId, cols, rows) => {
   return ptyManager.resize(sessionId, cols, rows);
+});
+
+// ==================== TMUX SESSION SHARING ====================
+
+// Check if tmux is available
+ipcMain.handle('get-tmux-status', () => {
+  return {
+    available: ptyManager.isTmuxAvailable(),
+    enabled: ptyManager.tmuxEnabled,
+    sessions: ptyManager.getTmuxSessions()
+  };
+});
+
+// Toggle tmux mode
+ipcMain.handle('toggle-tmux-mode', (event, enabled) => {
+  const result = ptyManager.setTmuxEnabled(enabled);
+  config.set('tmuxEnabled', result);
+  return { success: true, enabled: result };
+});
+
+// Get tmux sessions
+ipcMain.handle('get-tmux-sessions', () => {
+  return ptyManager.getTmuxSessions();
+});
+
+// Attach to existing tmux session
+ipcMain.handle('attach-tmux-session', (event, tmuxSessionName) => {
+  return ptyManager.createSession({
+    useTmux: true,
+    attachToTmux: tmuxSessionName
+  });
+});
+
+// Kill tmux session
+ipcMain.handle('kill-tmux-session', (event, tmuxSessionName) => {
+  return ptyManager.killTmuxSession(tmuxSessionName);
 });
 
 // Forward PTY output to renderer

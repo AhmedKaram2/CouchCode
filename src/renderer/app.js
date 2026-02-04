@@ -161,6 +161,13 @@ const setPinBtn = document.getElementById('set-pin');
 const startLoginCheckbox = document.getElementById('start-login');
 const startMinimizedCheckbox = document.getElementById('start-minimized');
 const shellSelect = document.getElementById('shell-select');
+
+// Tmux session sharing elements
+const tmuxEnabledCheckbox = document.getElementById('tmux-enabled');
+const tmuxUnavailable = document.getElementById('tmux-unavailable');
+const tmuxSessionsList = document.getElementById('tmux-sessions-list');
+const tmuxSessionsContent = document.getElementById('tmux-sessions-content');
+const refreshTmuxSessionsBtn = document.getElementById('refresh-tmux-sessions');
 const toast = document.getElementById('toast');
 
 // Update banner elements
@@ -537,6 +544,11 @@ async function init() {
   initTerminal();
   setupEventListeners();
   updateSettingsUI();
+
+  // Load tmux status
+  if (typeof loadTmuxStatus === 'function') {
+    loadTmuxStatus();
+  }
 
   // Poll for updates
   setInterval(async () => {
@@ -1361,6 +1373,132 @@ function updateSettingsUI() {
   document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.theme === currentTheme);
   });
+}
+
+// ==================== TMUX SESSION SHARING ====================
+
+// Load tmux status and update UI
+async function loadTmuxStatus() {
+  try {
+    const status = await ipcRenderer.invoke('get-tmux-status');
+
+    if (tmuxUnavailable) {
+      tmuxUnavailable.classList.toggle('hidden', status.available);
+    }
+
+    if (tmuxEnabledCheckbox) {
+      tmuxEnabledCheckbox.checked = status.enabled;
+      tmuxEnabledCheckbox.disabled = !status.available;
+    }
+
+    // Show/hide tmux sessions list
+    if (tmuxSessionsList && status.available) {
+      const sessions = status.sessions.filter(s => s.isCouchCode);
+      if (sessions.length > 0) {
+        tmuxSessionsList.classList.remove('hidden');
+        renderTmuxSessions(sessions);
+      } else {
+        tmuxSessionsList.classList.add('hidden');
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load tmux status:', e);
+  }
+}
+
+// Render tmux sessions list
+function renderTmuxSessions(sessions) {
+  if (!tmuxSessionsContent) return;
+
+  if (sessions.length === 0) {
+    tmuxSessionsContent.innerHTML = '<p class="no-tmux-sessions">No active tmux sessions</p>';
+    return;
+  }
+
+  tmuxSessionsContent.innerHTML = sessions.map(s => `
+    <div class="tmux-session-item">
+      <div class="tmux-session-info">
+        <span class="tmux-session-name">${escapeHtml(s.name)}</span>
+        <span class="tmux-session-status">${s.attached ? '🟢 attached' : '⚪ detached'}</span>
+      </div>
+      <div class="tmux-session-actions">
+        <button class="btn-icon-sm tmux-attach-btn" data-session="${escapeHtml(s.name)}" title="Attach">📎</button>
+        <button class="btn-icon-sm tmux-kill-btn" data-session="${escapeHtml(s.name)}" title="Kill">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Add event listeners
+  tmuxSessionsContent.querySelectorAll('.tmux-attach-btn').forEach(btn => {
+    btn.addEventListener('click', () => attachToTmuxSession(btn.dataset.session));
+  });
+
+  tmuxSessionsContent.querySelectorAll('.tmux-kill-btn').forEach(btn => {
+    btn.addEventListener('click', () => killTmuxSession(btn.dataset.session));
+  });
+}
+
+// Escape HTML for safe rendering
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Toggle tmux mode
+async function toggleTmuxMode() {
+  if (!tmuxEnabledCheckbox) return;
+
+  try {
+    const result = await ipcRenderer.invoke('toggle-tmux-mode', tmuxEnabledCheckbox.checked);
+    if (result.success) {
+      showToast(result.enabled ? 'tmux session sharing enabled' : 'tmux session sharing disabled');
+      loadTmuxStatus();
+    }
+  } catch (e) {
+    console.error('Failed to toggle tmux mode:', e);
+    tmuxEnabledCheckbox.checked = !tmuxEnabledCheckbox.checked; // Revert
+  }
+}
+
+// Attach to existing tmux session
+async function attachToTmuxSession(sessionName) {
+  try {
+    const result = await ipcRenderer.invoke('attach-tmux-session', sessionName);
+    if (result) {
+      currentSessionId = result.id;
+      await loadSessions();
+      showToast(`Attached to tmux session: ${sessionName}`);
+    }
+  } catch (e) {
+    console.error('Failed to attach to tmux session:', e);
+    showToast('Failed to attach to tmux session');
+  }
+}
+
+// Kill tmux session
+async function killTmuxSession(sessionName) {
+  if (!confirm(`Kill tmux session "${sessionName}"? This will terminate all processes in it.`)) {
+    return;
+  }
+
+  try {
+    await ipcRenderer.invoke('kill-tmux-session', sessionName);
+    showToast(`Killed tmux session: ${sessionName}`);
+    loadTmuxStatus();
+  } catch (e) {
+    console.error('Failed to kill tmux session:', e);
+    showToast('Failed to kill tmux session');
+  }
+}
+
+// Setup tmux event listeners
+if (tmuxEnabledCheckbox) {
+  tmuxEnabledCheckbox.addEventListener('change', toggleTmuxMode);
+}
+
+if (refreshTmuxSessionsBtn) {
+  refreshTmuxSessionsBtn.addEventListener('click', loadTmuxStatus);
 }
 
 // QR code image load handler
