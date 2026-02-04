@@ -37,9 +37,14 @@ Perfect for:
 
 ## ✨ Features
 
-> **🎉 New in v1.5.0:** AI Command Center with 150+ smart snippets! Natural language to command conversion, categorized quick commands for Git, Docker, Kubernetes, NPM, Python, and more.
+> **🎉 New in v1.6.0:** Full app theming with 8 beautiful themes! Dark, Light, Monokai, Dracula, Nord, Solarized, Gruvbox, and Tokyo Night - theme changes apply to the entire app interface.
 
-**🧠 AI Command Center** *(New in v1.5.0)*
+**🎨 Full App Theming** *(New in v1.6.0)*
+- 8 beautiful themes: Dark, Light, Monokai, Dracula, Nord, Solarized, Gruvbox, Tokyo Night
+- Theme applies to entire app UI, not just terminal
+- Instant theme switching in settings
+
+**🧠 AI Command Center**
 - Natural language to terminal command conversion
 - 150+ smart snippets organized by category
 - Quick access to Git, Docker, Kubernetes, NPM, Python commands
@@ -85,12 +90,12 @@ Perfect for:
 
 | Platform | Download | Size |
 |----------|----------|------|
-| **macOS (Apple Silicon)** | [CouchCode-1.5.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-mac-arm64.dmg) | ~93 MB |
-| **macOS (Intel)** | [CouchCode-1.5.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-mac-x64.dmg) | ~99 MB |
-| **Windows (64-bit)** | [CouchCode-1.5.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-win-x64.exe) | ~77 MB |
-| **Windows (32-bit)** | [CouchCode-1.5.0-win-ia32.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-win-ia32.exe) | ~68 MB |
-| **Linux (Universal)** | [CouchCode-1.5.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-linux-x86_64.AppImage) | ~102 MB |
-| **Linux (Debian/Ubuntu)** | [CouchCode-1.5.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-linux-amd64.deb) | ~71 MB |
+| **macOS (Apple Silicon)** | [CouchCode-1.6.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-mac-arm64.dmg) | ~93 MB |
+| **macOS (Intel)** | [CouchCode-1.6.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-mac-x64.dmg) | ~99 MB |
+| **Windows (64-bit)** | [CouchCode-1.6.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-win-x64.exe) | ~77 MB |
+| **Windows (32-bit)** | [CouchCode-1.6.0-win-ia32.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-win-ia32.exe) | ~68 MB |
+| **Linux (Universal)** | [CouchCode-1.6.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-linux-x86_64.AppImage) | ~102 MB |
+| **Linux (Debian/Ubuntu)** | [CouchCode-1.6.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.6.0/CouchCode-1.6.0-linux-amd64.deb) | ~71 MB |
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
@@ -201,7 +206,7 @@ CouchCode/
   </tr>
 </table>
 
-### AI Command Center *(New in v1.5.0)*
+### AI Command Center *(New in v1.6.0)*
 <img src="screenshots/command-center.png" alt="AI Command Center" width="700"/>
 <p><em>150+ smart snippets with natural language search</em></p>
 
@@ -264,7 +269,8 @@ cd vscode-extension && npm install && code .
 ## 🗺️ Roadmap
 
 **✅ Completed**
-- AI Command Center with 150+ smart snippets (v1.5.0)
+- Full app theming with 8 themes (v1.6.0)
+- AI Command Center with 150+ smart snippets
 - Natural language to terminal command conversion
 - Universal CLI tool support with login shells
 - VSCode extension with embedded terminal
@@ -278,7 +284,6 @@ cd vscode-extension && npm install && code .
 - Multi-user support & team collaboration
 - SSH tunneling for remote access
 - Command history search
-- Themes & customization
 - Vim mode & file transfer
 - Terminal multiplexing (tmux-like)
 
@@ -286,11 +291,12 @@ cd vscode-extension && npm install && code .
 
 ## 📝 Changelog
 
-**Latest:** v1.5.0 - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.5.0) • [Full History](CHANGELOG.md)
+**Latest:** v1.6.0 - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.6.0) • [Full History](CHANGELOG.md)
 
-### v1.5.0 Highlights
-- 🧠 **AI Command Center** - Natural language to command conversion
-- 📋 **150+ Smart Snippets** - Quick commands for Git, Docker, K8s, NPM, Python, and more
+### v1.6.0 Highlights
+- 🎨 **Full App Theming** - 8 themes that apply to the entire UI
+- 🌈 **New Themes** - Nord, Solarized, Gruvbox, Tokyo Night added
+- 🔧 **UI Improvements** - Better light theme button contrast
 
 ## 📄 License
 
