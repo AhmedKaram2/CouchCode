@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Draggable Title Bar (macOS) -->
+  <div class="title-bar">
+    <div class="title-bar-drag"></div>
+    <span class="title-bar-text">CouchCode</span>
+  </div>
+
   <!-- Update Banner -->
   <div id="update-banner" class="update-banner hidden">
     <div class="banner-content">
@@ -36,7 +42,8 @@
       <!-- QR Code Section -->
       <section class="qr-section">
         <div id="qr-container" class="qr-container">
-          <img id="qr-code" src="" alt="QR Code">
+          <img id="qr-code" src="" alt="Loading QR Code..." style="width: 120px; height: 120px;">
+          <div id="qr-placeholder" class="qr-placeholder">Loading...</div>
         </div>
         <p class="qr-instruction">Scan with your phone</p>
         <div class="url-container">
@@ -77,6 +84,11 @@
       <header class="terminal-header">
         <h2 id="session-title">No Session</h2>
         <div class="header-actions">
+          <button id="command-center-btn" class="header-btn command-center-btn" title="AI Command Center - Snippets & Natural Language">
+            <svg viewBox="0 0 24 24" width="20" height="20">
+              <path fill="currentColor" d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6 3L12 10.18l-6-3 6-3zM4 16.34V8.69l7 3.5v7.65l-7-3.5zm9 3.5v-7.65l7-3.5v7.65l-7 3.5z"/>
+            </svg>
+          </button>
           <button id="claude-code-btn" class="header-btn claude-code-btn" title="Claude Code - AI Coding Assistant">
             <svg viewBox="0 0 24 24" width="22" height="22">
               <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
@@ -135,6 +147,18 @@
           <button class="action-btn" data-action="ctrl-l" title="Clear Screen">Clear</button>
           <button class="action-btn" data-action="ctrl-r" title="Search History">🔍</button>
           <button class="action-btn" data-action="esc" title="Escape">Esc</button>
+        </div>
+      </div>
+
+      <!-- Smart Suggestions Panel -->
+      <div id="smart-suggestions" class="smart-suggestions hidden">
+        <div class="suggestions-header">
+          <span class="sparkle-icon">✨</span>
+          <span>Smart Suggestions</span>
+          <button id="close-suggestions" class="close-suggestions-btn">&times;</button>
+        </div>
+        <div id="suggestions-list" class="suggestions-list">
+          <!-- Suggestions will be populated dynamically -->
         </div>
       </div>
 
@@ -307,6 +331,93 @@
           </svg>
           Start Coding
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Combined AI Command Center Modal -->
+  <div id="ai-command-center" class="modal hidden">
+    <div class="modal-content command-center-modal">
+      <div class="modal-header command-center-header">
+        <div class="modal-icon command-center-icon">
+          <svg viewBox="0 0 24 24" width="28" height="28">
+            <path fill="currentColor" d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18l6 3L12 10.18l-6-3 6-3zM4 16.34V8.69l7 3.5v7.65l-7-3.5zm9 3.5v-7.65l7-3.5v7.65l-7 3.5z"/>
+          </svg>
+        </div>
+        <h3>AI Command Center</h3>
+        <p>Search snippets or describe what you want to do</p>
+        <button id="close-command-center" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body command-center-body">
+        <!-- Search & AI Input -->
+        <div class="command-search-section">
+          <div class="command-search-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18">
+              <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input type="text" id="command-search-input" placeholder="Search commands or type in plain English... (e.g., 'list all files' or 'git status')" autocomplete="off">
+            <button id="ai-generate-btn" class="generate-btn" title="Generate from description">
+              <span>✨</span>
+            </button>
+          </div>
+          <!-- AI Generated Result -->
+          <div id="ai-result" class="ai-result hidden">
+            <div class="ai-result-header">
+              <span>✨ Generated Command:</span>
+              <button id="copy-ai-result" class="copy-btn" title="Copy command">
+                <svg viewBox="0 0 24 24" width="14" height="14">
+                  <path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                </svg>
+              </button>
+            </div>
+            <code id="ai-command-output"></code>
+            <button id="ai-run-btn" class="run-generated-btn">
+              <svg viewBox="0 0 24 24" width="14" height="14">
+                <path fill="currentColor" d="M8 5v14l11-7z"/>
+              </svg>
+              Run Command
+            </button>
+          </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="command-categories">
+          <button class="category-btn active" data-category="all">
+            <span>📋</span> All
+          </button>
+          <button class="category-btn" data-category="git">
+            <span>🌿</span> Git
+          </button>
+          <button class="category-btn" data-category="files">
+            <span>📁</span> Files
+          </button>
+          <button class="category-btn" data-category="system">
+            <span>💻</span> System
+          </button>
+          <button class="category-btn" data-category="network">
+            <span>🌐</span> Network
+          </button>
+          <button class="category-btn" data-category="docker">
+            <span>🐳</span> Docker
+          </button>
+          <button class="category-btn" data-category="npm">
+            <span>📦</span> NPM
+          </button>
+          <button class="category-btn" data-category="python">
+            <span>🐍</span> Python
+          </button>
+          <button class="category-btn" data-category="k8s">
+            <span>☸️</span> K8s
+          </button>
+          <button class="category-btn" data-category="database">
+            <span>🗄️</span> DB
+          </button>
+        </div>
+
+        <!-- Snippets List -->
+        <div id="snippets-list" class="snippets-list">
+          <!-- Snippets will be populated dynamically -->
+        </div>
       </div>
     </div>
   </div>

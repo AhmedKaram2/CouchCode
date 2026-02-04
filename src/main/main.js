@@ -253,13 +253,23 @@ ipcMain.handle('stop-server', async () => {
 ipcMain.handle('get-qr-code', async () => {
   const QRCode = require('qrcode');
   const url = server.getConnectionURL();
+  console.log('Generating QR code for URL:', url);
+
+  if (!url || url === 'http://127.0.0.1:undefined') {
+    console.error('Invalid URL for QR code:', url);
+    return { error: 'Server URL not available yet' };
+  }
+
   try {
     const qrCode = await QRCode.toDataURL(url, {
       width: 200,
-      margin: 2
+      margin: 2,
+      errorCorrectionLevel: 'M'
     });
+    console.log('QR code generated successfully, length:', qrCode.length);
     return { qrCode, url };
   } catch (error) {
+    console.error('QR code generation error:', error);
     return { error: error.message };
   }
 });

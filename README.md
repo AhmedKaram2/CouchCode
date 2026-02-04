@@ -37,7 +37,14 @@ Perfect for:
 
 ## ✨ Features
 
-> **🎉 New in v1.3.0:** Universal CLI tool support! All user-installed CLI tools (Claude, pipx, cargo, etc.) now work automatically across all platforms.
+> **🎉 New in v1.5.0:** AI Command Center with 150+ smart snippets! Natural language to command conversion, categorized quick commands for Git, Docker, Kubernetes, NPM, Python, and more.
+
+**🧠 AI Command Center** *(New in v1.5.0)*
+- Natural language to terminal command conversion
+- 150+ smart snippets organized by category
+- Quick access to Git, Docker, Kubernetes, NPM, Python commands
+- Intelligent command search and filtering
+- One-click copy and execute
 
 **🌐 Remote Access**
 - Browser-based interface with PWA support for mobile
@@ -78,12 +85,12 @@ Perfect for:
 
 | Platform | Download | Size |
 |----------|----------|------|
-| **macOS (Apple Silicon)** | [CouchCode-1.3.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-arm64.dmg) | 93 MB |
-| **macOS (Intel)** | [CouchCode-1.3.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-mac-x64.dmg) | 99 MB |
-| **Windows (64-bit)** | [CouchCode-1.3.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-win-x64.exe) | 77 MB |
-| **Windows (32-bit)** | [CouchCode-1.3.0-win-ia32.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-win-ia32.exe) | 68 MB |
-| **Linux (Universal)** | [CouchCode-1.3.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-linux-x86_64.AppImage) | 102 MB |
-| **Linux (Debian/Ubuntu)** | [CouchCode-1.3.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.3.0/CouchCode-1.3.0-linux-amd64.deb) | 71 MB |
+| **macOS (Apple Silicon)** | [CouchCode-1.5.0-mac-arm64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-mac-arm64.dmg) | ~93 MB |
+| **macOS (Intel)** | [CouchCode-1.5.0-mac-x64.dmg](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-mac-x64.dmg) | ~99 MB |
+| **Windows (64-bit)** | [CouchCode-1.5.0-win-x64.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-win-x64.exe) | ~77 MB |
+| **Windows (32-bit)** | [CouchCode-1.5.0-win-ia32.exe](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-win-ia32.exe) | ~68 MB |
+| **Linux (Universal)** | [CouchCode-1.5.0-linux-x86_64.AppImage](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-linux-x86_64.AppImage) | ~102 MB |
+| **Linux (Debian/Ubuntu)** | [CouchCode-1.5.0-linux-amd64.deb](https://github.com/AhmedKaram2/CouchCode/releases/download/v1.5.0/CouchCode-1.5.0-linux-amd64.deb) | ~71 MB |
 
 > **[View all releases](https://github.com/AhmedKaram2/CouchCode/releases)**
 
@@ -194,6 +201,10 @@ CouchCode/
   </tr>
 </table>
 
+### AI Command Center *(New in v1.5.0)*
+<img src="screenshots/command-center.png" alt="AI Command Center" width="700"/>
+<p><em>150+ smart snippets with natural language search</em></p>
+
 ### Claude Code Integration
 <img src="screenshots/claude-code.png" alt="Claude Code Integration" width="350"/>
 <p><em>Quick access to AI coding assistant</em></p>
@@ -252,6 +263,13 @@ cd vscode-extension && npm install && code .
 
 ## 🗺️ Roadmap
 
+**✅ Completed (v1.5.0)**
+- AI Command Center with 150+ smart snippets
+- Natural language to command conversion
+- Categorized quick commands (Git, Docker, K8s, NPM, Python, etc.)
+- Improved macOS title bar with window dragging
+- Responsive settings dialog for small windows
+
 **✅ Completed (v1.3.0)**
 - Universal CLI tool support with login shells
 - Enhanced PATH configuration
@@ -274,7 +292,13 @@ cd vscode-extension && npm install && code .
 
 ## 📝 Changelog
 
-**Latest:** v1.3.0 - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.3.0) • [Full History](CHANGELOG.md)
+**Latest:** v1.5.0 - [Release Notes](https://github.com/AhmedKaram2/CouchCode/releases/tag/v1.5.0) • [Full History](CHANGELOG.md)
+
+### v1.5.0 Highlights
+- 🧠 **AI Command Center** - Natural language to command conversion
+- 📋 **150+ Smart Snippets** - Quick commands for Git, Docker, K8s, NPM, Python, and more
+- 🎨 **Improved macOS UI** - Native title bar with proper window dragging
+- 📱 **Responsive Design** - Settings dialog fits small windows
 
 ## 📄 License
 
