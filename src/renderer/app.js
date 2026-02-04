@@ -70,13 +70,14 @@ const themes = {
     brightBlue: '#79c0ff',
     brightMagenta: '#d2a8ff',
     brightCyan: '#56d4dd',
-    brightWhite: '#f0f6fc'
+    brightWhite: '#f0f6fc',
+    isLight: false
   },
   light: {
-    background: '#ffffff',
+    background: '#f6f8fa',
     foreground: '#24292f',
     cursor: '#0969da',
-    cursorAccent: '#ffffff',
+    cursorAccent: '#f6f8fa',
     selection: 'rgba(9, 105, 218, 0.2)',
     black: '#24292f',
     red: '#cf222e',
@@ -93,7 +94,8 @@ const themes = {
     brightBlue: '#218bff',
     brightMagenta: '#a475f9',
     brightCyan: '#3192aa',
-    brightWhite: '#8c959f'
+    brightWhite: '#8c959f',
+    isLight: true
   },
   monokai: {
     background: '#272822',
@@ -116,7 +118,8 @@ const themes = {
     brightBlue: '#66d9ef',
     brightMagenta: '#ae81ff',
     brightCyan: '#a1efe4',
-    brightWhite: '#f9f8f5'
+    brightWhite: '#f9f8f5',
+    isLight: false
   },
   dracula: {
     background: '#282a36',
@@ -139,7 +142,104 @@ const themes = {
     brightBlue: '#d6acff',
     brightMagenta: '#ff92df',
     brightCyan: '#a4ffff',
-    brightWhite: '#ffffff'
+    brightWhite: '#ffffff',
+    isLight: false
+  },
+  nord: {
+    background: '#2e3440',
+    foreground: '#d8dee9',
+    cursor: '#d8dee9',
+    cursorAccent: '#2e3440',
+    selection: 'rgba(67, 76, 94, 0.8)',
+    black: '#3b4252',
+    red: '#bf616a',
+    green: '#a3be8c',
+    yellow: '#ebcb8b',
+    blue: '#81a1c1',
+    magenta: '#b48ead',
+    cyan: '#88c0d0',
+    white: '#e5e9f0',
+    brightBlack: '#4c566a',
+    brightRed: '#bf616a',
+    brightGreen: '#a3be8c',
+    brightYellow: '#ebcb8b',
+    brightBlue: '#81a1c1',
+    brightMagenta: '#b48ead',
+    brightCyan: '#8fbcbb',
+    brightWhite: '#eceff4',
+    isLight: false
+  },
+  solarized: {
+    background: '#002b36',
+    foreground: '#839496',
+    cursor: '#839496',
+    cursorAccent: '#002b36',
+    selection: 'rgba(7, 54, 66, 0.8)',
+    black: '#073642',
+    red: '#dc322f',
+    green: '#859900',
+    yellow: '#b58900',
+    blue: '#268bd2',
+    magenta: '#d33682',
+    cyan: '#2aa198',
+    white: '#eee8d5',
+    brightBlack: '#586e75',
+    brightRed: '#cb4b16',
+    brightGreen: '#586e75',
+    brightYellow: '#657b83',
+    brightBlue: '#839496',
+    brightMagenta: '#6c71c4',
+    brightCyan: '#93a1a1',
+    brightWhite: '#fdf6e3',
+    isLight: false
+  },
+  gruvbox: {
+    background: '#282828',
+    foreground: '#ebdbb2',
+    cursor: '#ebdbb2',
+    cursorAccent: '#282828',
+    selection: 'rgba(60, 56, 54, 0.8)',
+    black: '#282828',
+    red: '#cc241d',
+    green: '#98971a',
+    yellow: '#d79921',
+    blue: '#458588',
+    magenta: '#b16286',
+    cyan: '#689d6a',
+    white: '#a89984',
+    brightBlack: '#928374',
+    brightRed: '#fb4934',
+    brightGreen: '#b8bb26',
+    brightYellow: '#fabd2f',
+    brightBlue: '#83a598',
+    brightMagenta: '#d3869b',
+    brightCyan: '#8ec07c',
+    brightWhite: '#ebdbb2',
+    isLight: false
+  },
+  tokyo: {
+    background: '#1a1b26',
+    foreground: '#c0caf5',
+    cursor: '#c0caf5',
+    cursorAccent: '#1a1b26',
+    selection: 'rgba(41, 46, 66, 0.8)',
+    black: '#15161e',
+    red: '#f7768e',
+    green: '#9ece6a',
+    yellow: '#e0af68',
+    blue: '#7aa2f7',
+    magenta: '#bb9af7',
+    cyan: '#7dcfff',
+    white: '#a9b1d6',
+    brightBlack: '#414868',
+    brightRed: '#f7768e',
+    brightGreen: '#9ece6a',
+    brightYellow: '#e0af68',
+    brightBlue: '#7aa2f7',
+    brightMagenta: '#bb9af7',
+    brightCyan: '#7dcfff',
+    brightWhite: '#c0caf5',
+    isLight: false
   }
 };
 
@@ -167,14 +267,7 @@ const tmuxEnabledCheckbox = document.getElementById('tmux-enabled');
 const tmuxUnavailable = document.getElementById('tmux-unavailable');
 const tmuxInstalling = document.getElementById('tmux-installing');
 const installTmuxBtn = document.getElementById('install-tmux-btn');
-const tmuxSessionsList = document.getElementById('tmux-sessions-list');
-const tmuxSessionsContent = document.getElementById('tmux-sessions-content');
-const refreshTmuxSessionsBtn = document.getElementById('refresh-tmux-sessions');
 
-// Existing system tmux sessions elements
-const existingTmuxSection = document.getElementById('existing-tmux-section');
-const existingTmuxList = document.getElementById('existing-tmux-list');
-const refreshSystemTmuxBtn = document.getElementById('refresh-system-tmux');
 const toast = document.getElementById('toast');
 
 // Update banner elements
@@ -549,17 +642,13 @@ async function init() {
 
   await loadSessions();
   initTerminal();
+  applyTheme(); // Apply theme to full app
   setupEventListeners();
   updateSettingsUI();
 
   // Load tmux status
   if (typeof loadTmuxStatus === 'function') {
     loadTmuxStatus();
-  }
-
-  // Load existing tmux sessions in sidebar
-  if (typeof loadExistingTmuxSessions === 'function') {
-    loadExistingTmuxSessions();
   }
 
   // Poll for updates
@@ -1371,10 +1460,53 @@ function setTheme(themeName) {
 }
 
 function applyTheme() {
-  if (terminal && themes[currentTheme]) {
-    terminal.options.theme = themes[currentTheme];
+  const theme = themes[currentTheme];
+  if (!theme) return;
+
+  // Apply to terminal
+  if (terminal) {
+    terminal.options.theme = theme;
     terminal.refresh(0, terminal.rows - 1);
   }
+
+  // Apply to full app via CSS variables
+  const root = document.documentElement;
+  const isLight = theme.isLight;
+  const adjust = isLight ? -10 : 10; // Darken for light themes, lighten for dark
+
+  root.style.setProperty('--background', theme.background);
+  root.style.setProperty('--surface', adjustColor(theme.background, adjust));
+  root.style.setProperty('--surface-light', adjustColor(theme.background, adjust * 2));
+  root.style.setProperty('--surface-elevated', adjustColor(theme.background, adjust * 1.5));
+  root.style.setProperty('--text-primary', theme.foreground);
+  root.style.setProperty('--text-secondary', isLight ? theme.brightBlack : (theme.white || theme.foreground));
+  root.style.setProperty('--text-muted', isLight ? theme.white : (theme.brightBlack || theme.white));
+  root.style.setProperty('--border-color', adjustColor(theme.background, adjust * 2.5));
+  root.style.setProperty('--primary-color', theme.green);
+  root.style.setProperty('--primary-hover', theme.brightGreen || theme.green);
+  root.style.setProperty('--primary-glow', isLight ? 'rgba(26, 127, 55, 0.1)' : 'rgba(63, 185, 80, 0.15)');
+  root.style.setProperty('--info-color', theme.blue);
+  root.style.setProperty('--danger-color', theme.red);
+  root.style.setProperty('--warning-color', theme.yellow);
+
+  // Set button text colors for proper contrast
+  root.style.setProperty('--btn-primary-text', '#ffffff');
+  root.style.setProperty('--btn-secondary-bg', isLight ? '#e1e4e8' : adjustColor(theme.background, 20));
+  root.style.setProperty('--btn-secondary-text', theme.foreground);
+  root.style.setProperty('--btn-secondary-border', adjustColor(theme.background, adjust * 3));
+}
+
+// Helper to lighten/darken a hex color
+function adjustColor(hex, amount) {
+  hex = hex.replace('#', '');
+  const num = parseInt(hex, 16);
+  let r = (num >> 16) + amount;
+  let g = ((num >> 8) & 0x00FF) + amount;
+  let b = (num & 0x0000FF) + amount;
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
 // Update settings UI
@@ -1403,51 +1535,9 @@ async function loadTmuxStatus() {
       tmuxEnabledCheckbox.disabled = !status.available;
     }
 
-    // Show/hide tmux sessions list
-    if (tmuxSessionsList && status.available) {
-      const sessions = status.sessions.filter(s => s.isCouchCode);
-      if (sessions.length > 0) {
-        tmuxSessionsList.classList.remove('hidden');
-        renderTmuxSessions(sessions);
-      } else {
-        tmuxSessionsList.classList.add('hidden');
-      }
-    }
   } catch (e) {
     console.error('Failed to load tmux status:', e);
   }
-}
-
-// Render tmux sessions list
-function renderTmuxSessions(sessions) {
-  if (!tmuxSessionsContent) return;
-
-  if (sessions.length === 0) {
-    tmuxSessionsContent.innerHTML = '<p class="no-tmux-sessions">No active tmux sessions</p>';
-    return;
-  }
-
-  tmuxSessionsContent.innerHTML = sessions.map(s => `
-    <div class="tmux-session-item">
-      <div class="tmux-session-info">
-        <span class="tmux-session-name">${escapeHtml(s.name)}</span>
-        <span class="tmux-session-status">${s.attached ? '🟢 attached' : '⚪ detached'}</span>
-      </div>
-      <div class="tmux-session-actions">
-        <button class="btn-icon-sm tmux-attach-btn" data-session="${escapeHtml(s.name)}" title="Attach">📎</button>
-        <button class="btn-icon-sm tmux-kill-btn" data-session="${escapeHtml(s.name)}" title="Kill">🗑️</button>
-      </div>
-    </div>
-  `).join('');
-
-  // Add event listeners
-  tmuxSessionsContent.querySelectorAll('.tmux-attach-btn').forEach(btn => {
-    btn.addEventListener('click', () => attachToTmuxSession(btn.dataset.session));
-  });
-
-  tmuxSessionsContent.querySelectorAll('.tmux-kill-btn').forEach(btn => {
-    btn.addEventListener('click', () => killTmuxSession(btn.dataset.session));
-  });
 }
 
 // Escape HTML for safe rendering
@@ -1470,37 +1560,6 @@ async function toggleTmuxMode() {
   } catch (e) {
     console.error('Failed to toggle tmux mode:', e);
     tmuxEnabledCheckbox.checked = !tmuxEnabledCheckbox.checked; // Revert
-  }
-}
-
-// Attach to existing tmux session
-async function attachToTmuxSession(sessionName) {
-  try {
-    const result = await ipcRenderer.invoke('attach-tmux-session', sessionName);
-    if (result) {
-      currentSessionId = result.id;
-      await loadSessions();
-      showToast(`Attached to tmux session: ${sessionName}`);
-    }
-  } catch (e) {
-    console.error('Failed to attach to tmux session:', e);
-    showToast('Failed to attach to tmux session');
-  }
-}
-
-// Kill tmux session
-async function killTmuxSession(sessionName) {
-  if (!confirm(`Kill tmux session "${sessionName}"? This will terminate all processes in it.`)) {
-    return;
-  }
-
-  try {
-    await ipcRenderer.invoke('kill-tmux-session', sessionName);
-    showToast(`Killed tmux session: ${sessionName}`);
-    loadTmuxStatus();
-  } catch (e) {
-    console.error('Failed to kill tmux session:', e);
-    showToast('Failed to kill tmux session');
   }
 }
 
@@ -1538,70 +1597,8 @@ if (tmuxEnabledCheckbox) {
   tmuxEnabledCheckbox.addEventListener('change', toggleTmuxMode);
 }
 
-if (refreshTmuxSessionsBtn) {
-  refreshTmuxSessionsBtn.addEventListener('click', loadTmuxStatus);
-}
-
 if (installTmuxBtn) {
   installTmuxBtn.addEventListener('click', installTmux);
-}
-
-if (refreshSystemTmuxBtn) {
-  refreshSystemTmuxBtn.addEventListener('click', loadExistingTmuxSessions);
-}
-
-// Load existing system tmux sessions for sidebar
-async function loadExistingTmuxSessions() {
-  try {
-    const status = await ipcRenderer.invoke('get-tmux-status');
-
-    if (!status.available) {
-      if (existingTmuxSection) existingTmuxSection.classList.add('hidden');
-      return;
-    }
-
-    const sessions = status.sessions || [];
-
-    if (sessions.length > 0) {
-      if (existingTmuxSection) existingTmuxSection.classList.remove('hidden');
-      renderExistingTmuxSessions(sessions);
-    } else {
-      if (existingTmuxSection) existingTmuxSection.classList.add('hidden');
-    }
-  } catch (e) {
-    console.error('Failed to load existing tmux sessions:', e);
-  }
-}
-
-// Render existing tmux sessions in sidebar
-function renderExistingTmuxSessions(sessions) {
-  if (!existingTmuxList) return;
-
-  existingTmuxList.innerHTML = sessions.map(s => `
-    <div class="existing-tmux-item" data-session="${escapeHtml(s.name)}">
-      <div class="existing-tmux-info">
-        <span class="existing-tmux-name">🖥️ ${escapeHtml(s.name)}</span>
-        <span class="existing-tmux-status">${s.attached ? '🟢 attached' : '⚪ available'}</span>
-      </div>
-      <button class="btn-attach-tmux" data-session="${escapeHtml(s.name)}" title="Attach to this session">
-        Connect
-      </button>
-    </div>
-  `).join('');
-
-  // Add click handlers
-  existingTmuxList.querySelectorAll('.btn-attach-tmux').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      attachToTmuxSession(btn.dataset.session);
-    });
-  });
-
-  existingTmuxList.querySelectorAll('.existing-tmux-item').forEach(item => {
-    item.addEventListener('click', () => {
-      attachToTmuxSession(item.dataset.session);
-    });
-  });
 }
 
 // QR code image load handler

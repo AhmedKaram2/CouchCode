@@ -353,10 +353,27 @@ ipcMain.handle('terminal-resize', (event, sessionId, cols, rows) => {
 
 // Check if tmux is available
 ipcMain.handle('get-tmux-status', () => {
+  // Get all tmux sessions from the system
+  const allTmuxSessions = ptyManager.getTmuxSessions();
+
+  // Get tmux session names that the app is currently connected to
+  const appSessions = ptyManager.getSessions();
+  const activeTmuxNames = new Set(
+    appSessions
+      .filter(s => s.isTmux && s.tmuxSession)
+      .map(s => s.tmuxSession)
+  );
+
+  // Mark sessions as active if the app is connected to them
+  const sessions = allTmuxSessions.map(s => ({
+    ...s,
+    isActive: activeTmuxNames.has(s.name)
+  }));
+
   return {
     available: ptyManager.isTmuxAvailable(),
     enabled: ptyManager.tmuxEnabled,
-    sessions: ptyManager.getTmuxSessions()
+    sessions
   };
 });
 

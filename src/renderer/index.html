@@ -70,14 +70,6 @@
           <p class="no-sessions">No active sessions</p>
         </div>
 
-        <!-- Existing tmux sessions -->
-        <div id="existing-tmux-section" class="existing-tmux-section hidden">
-          <div class="section-subheader">
-            <span>System tmux Sessions</span>
-            <button id="refresh-system-tmux" class="btn-icon-xs" title="Refresh">🔄</button>
-          </div>
-          <div id="existing-tmux-list" class="existing-tmux-list"></div>
-        </div>
       </section>
 
       <!-- Server Controls -->
@@ -224,6 +216,22 @@
                 <span class="theme-preview dracula-preview"></span>
                 <span>Dracula</span>
               </button>
+              <button class="theme-btn" data-theme="nord" title="Nord">
+                <span class="theme-preview nord-preview"></span>
+                <span>Nord</span>
+              </button>
+              <button class="theme-btn" data-theme="solarized" title="Solarized">
+                <span class="theme-preview solarized-preview"></span>
+                <span>Solarized</span>
+              </button>
+              <button class="theme-btn" data-theme="gruvbox" title="Gruvbox">
+                <span class="theme-preview gruvbox-preview"></span>
+                <span>Gruvbox</span>
+              </button>
+              <button class="theme-btn" data-theme="tokyo" title="Tokyo Night">
+                <span class="theme-preview tokyo-preview"></span>
+                <span>Tokyo</span>
+              </button>
             </div>
           </div>
         </div>
@@ -269,13 +277,6 @@
           <p class="setting-hint">
             When enabled, new sessions use tmux so you can attach from your local terminal with: <code>tmux attach -t couchcode-*</code>
           </p>
-          <div id="tmux-sessions-list" class="tmux-sessions-list hidden">
-            <div class="tmux-sessions-header">
-              <span>Active tmux sessions:</span>
-              <button id="refresh-tmux-sessions" class="btn-icon-sm" title="Refresh">🔄</button>
-            </div>
-            <div id="tmux-sessions-content"></div>
-          </div>
         </div>
         <!-- Startup Options -->
         <div class="setting-section">
