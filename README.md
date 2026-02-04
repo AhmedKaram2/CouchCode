@@ -263,17 +263,11 @@ cd vscode-extension && npm install && code .
 
 ## 🗺️ Roadmap
 
-**✅ Completed (v1.5.0)**
-- AI Command Center with 150+ smart snippets
-- Natural language to command conversion
-- Categorized quick commands (Git, Docker, K8s, NPM, Python, etc.)
-- Improved macOS title bar with window dragging
-- Responsive settings dialog for small windows
-
-**✅ Completed (v1.3.0)**
+**✅ Completed**
+- AI Command Center with 150+ smart snippets (v1.5.0)
+- Natural language to terminal command conversion
 - Universal CLI tool support with login shells
-- Enhanced PATH configuration
-- VSCode extension
+- VSCode extension with embedded terminal
 
 **🚧 In Progress**
 - JetBrains IDEs plugin
@@ -297,8 +291,6 @@ cd vscode-extension && npm install && code .
 ### v1.5.0 Highlights
 - 🧠 **AI Command Center** - Natural language to command conversion
 - 📋 **150+ Smart Snippets** - Quick commands for Git, Docker, K8s, NPM, Python, and more
-- 🎨 **Improved macOS UI** - Native title bar with proper window dragging
-- 📱 **Responsive Design** - Settings dialog fits small windows
 
 ## 📄 License
 
