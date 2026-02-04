@@ -6,6 +6,7 @@ const config = require('./config');
 const TrayManager = require('./tray');
 const ptyManager = require('./pty-manager');
 const updater = require('./updater');
+const { mainLogger: logger } = require('./logger');
 
 // Platform detection
 const platform = os.platform(); // 'win32', 'darwin', 'linux'
@@ -84,20 +85,20 @@ function createWindow() {
   mainWindow = new BrowserWindow(windowOptions);
 
   const indexPath = path.join(__dirname, '../renderer/index.html');
-  console.log('Loading:', indexPath);
+  logger.info('Loading renderer', { data: { path: indexPath } });
 
   mainWindow.loadFile(indexPath).catch(err => {
-    console.error('Failed to load index.html:', err);
+    logger.error('Failed to load index.html', { error: err });
   });
 
   // Handle load failures
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
-    console.error('Failed to load:', errorCode, errorDescription);
+    logger.error('Failed to load', { data: { errorCode, errorDescription } });
   });
 
   // Log when page finishes loading
   mainWindow.webContents.on('did-finish-load', () => {
-    console.log('Page loaded successfully');
+    logger.info('Page loaded successfully');
   });
 
   // Open external links in browser
@@ -127,7 +128,7 @@ function startPowerSaveBlocker() {
     // 'prevent-display-sleep' prevents the display from sleeping
     // 'prevent-app-suspension' prevents the app from being suspended
     powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep');
-    console.log('Power save blocker started, ID:', powerSaveBlockerId);
+    logger.info('Power save blocker started', { data: { id: powerSaveBlockerId } });
     return true;
   }
   return false;
@@ -137,7 +138,7 @@ function startPowerSaveBlocker() {
 function stopPowerSaveBlocker() {
   if (powerSaveBlockerId !== null && powerSaveBlocker.isStarted(powerSaveBlockerId)) {
     powerSaveBlocker.stop(powerSaveBlockerId);
-    console.log('Power save blocker stopped');
+    logger.info('Power save blocker stopped');
     powerSaveBlockerId = null;
     return true;
   }
@@ -170,7 +171,7 @@ app.whenReady().then(async () => {
       mainWindow.webContents.send('server-status-changed', true);
     }
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server', { error });
   }
 
   // Update tray periodically
@@ -257,10 +258,10 @@ ipcMain.handle('stop-server', async () => {
 ipcMain.handle('get-qr-code', async () => {
   const QRCode = require('qrcode');
   const url = server.getConnectionURL();
-  console.log('Generating QR code for URL:', url);
+  logger.debug('Generating QR code', { data: { url } });
 
   if (!url || url === 'http://127.0.0.1:undefined') {
-    console.error('Invalid URL for QR code:', url);
+    logger.error('Invalid URL for QR code', { data: { url } });
     return { error: 'Server URL not available yet' };
   }
 
@@ -270,10 +271,10 @@ ipcMain.handle('get-qr-code', async () => {
       margin: 2,
       errorCorrectionLevel: 'M'
     });
-    console.log('QR code generated successfully, length:', qrCode.length);
+    logger.debug('QR code generated', { data: { length: qrCode.length } });
     return { qrCode, url };
   } catch (error) {
-    console.error('QR code generation error:', error);
+    logger.error('QR code generation error', { error });
     return { error: error.message };
   }
 });
@@ -316,85 +317,140 @@ ipcMain.handle('set-pin', async (event, pin) => {
 
 // Get sessions
 ipcMain.handle('get-sessions', () => {
-  return ptyManager.getSessions();
+  try {
+    return ptyManager.getSessions();
+  } catch (error) {
+    logger.error('Failed to get sessions', { error });
+    return [];
+  }
 });
 
 // Get available shells
 ipcMain.handle('get-available-shells', () => {
-  return ptyManager.getAvailableShells();
+  try {
+    return ptyManager.getAvailableShells();
+  } catch (error) {
+    logger.error('Failed to get available shells', { error });
+    return [];
+  }
 });
 
 // Set preferred shell
 ipcMain.handle('set-preferred-shell', (event, shellPath) => {
-  return ptyManager.setPreferredShell(shellPath);
+  try {
+    return ptyManager.setPreferredShell(shellPath);
+  } catch (error) {
+    logger.error('Failed to set preferred shell', { error });
+    return false;
+  }
 });
 
 // Create session
 ipcMain.handle('create-session', (event, options) => {
-  return ptyManager.createSession(options);
+  try {
+    return ptyManager.createSession(options);
+  } catch (error) {
+    logger.error('Failed to create session', { error });
+    return null;
+  }
 });
 
 // Kill session
 ipcMain.handle('kill-session', (event, sessionId) => {
-  return ptyManager.killSession(sessionId);
+  try {
+    return ptyManager.killSession(sessionId);
+  } catch (error) {
+    logger.error('Failed to kill session', { error, data: { sessionId } });
+    return false;
+  }
 });
 
 // Terminal input
 ipcMain.handle('terminal-input', (event, sessionId, data) => {
-  return ptyManager.write(sessionId, data);
+  try {
+    return ptyManager.write(sessionId, data);
+  } catch (error) {
+    logger.error('Failed to write to terminal', { error, data: { sessionId } });
+    return false;
+  }
 });
 
 // Terminal resize
 ipcMain.handle('terminal-resize', (event, sessionId, cols, rows) => {
-  return ptyManager.resize(sessionId, cols, rows);
+  try {
+    return ptyManager.resize(sessionId, cols, rows);
+  } catch (error) {
+    logger.error('Failed to resize terminal', { error, data: { sessionId, cols, rows } });
+    return false;
+  }
 });
 
 // ==================== TMUX SESSION SHARING ====================
 
 // Check if tmux is available
 ipcMain.handle('get-tmux-status', () => {
-  // Get all tmux sessions from the system
-  const allTmuxSessions = ptyManager.getTmuxSessions();
+  try {
+    // Get all tmux sessions from the system
+    const allTmuxSessions = ptyManager.getTmuxSessions();
 
-  // Get tmux session names that the app is currently connected to
-  const appSessions = ptyManager.getSessions();
-  const activeTmuxNames = new Set(
-    appSessions
-      .filter(s => s.isTmux && s.tmuxSession)
-      .map(s => s.tmuxSession)
-  );
+    // Get tmux session names that the app is currently connected to
+    const appSessions = ptyManager.getSessions();
+    const activeTmuxNames = new Set(
+      appSessions
+        .filter(s => s.isTmux && s.tmuxSession)
+        .map(s => s.tmuxSession)
+    );
 
-  // Mark sessions as active if the app is connected to them
-  const sessions = allTmuxSessions.map(s => ({
-    ...s,
-    isActive: activeTmuxNames.has(s.name)
-  }));
+    // Mark sessions as active if the app is connected to them
+    const sessions = allTmuxSessions.map(s => ({
+      ...s,
+      isActive: activeTmuxNames.has(s.name)
+    }));
 
-  return {
-    available: ptyManager.isTmuxAvailable(),
-    enabled: ptyManager.tmuxEnabled,
-    sessions
-  };
+    return {
+      available: ptyManager.isTmuxAvailable(),
+      enabled: ptyManager.tmuxEnabled,
+      sessions
+    };
+  } catch (error) {
+    logger.error('Failed to get tmux status', { error });
+    return { available: false, enabled: false, sessions: [] };
+  }
 });
 
 // Toggle tmux mode
 ipcMain.handle('toggle-tmux-mode', (event, enabled) => {
-  const result = ptyManager.setTmuxEnabled(enabled);
-  config.set('tmuxEnabled', result);
-  return { success: true, enabled: result };
+  try {
+    const result = ptyManager.setTmuxEnabled(enabled);
+    config.set('tmuxEnabled', result);
+    return { success: true, enabled: result };
+  } catch (error) {
+    logger.error('Failed to toggle tmux mode', { error });
+    return { success: false, error: error.message };
+  }
 });
 
 // Get tmux sessions
 ipcMain.handle('get-tmux-sessions', () => {
-  return ptyManager.getTmuxSessions();
+  try {
+    return ptyManager.getTmuxSessions();
+  } catch (error) {
+    logger.error('Failed to get tmux sessions', { error });
+    return [];
+  }
 });
 
 // Attach to existing tmux session
 ipcMain.handle('attach-tmux-session', (event, tmuxSessionName) => {
-  return ptyManager.createSession({
-    useTmux: true,
-    attachToTmux: tmuxSessionName
-  });
+  try {
+    return ptyManager.createSession({
+      useTmux: true,
+      attachToTmux: tmuxSessionName
+    });
+  } catch (error) {
+    logger.error('Failed to attach to tmux session', { error, data: { tmuxSessionName } });
+    return null;
+  }
 });
 
 // Kill tmux session

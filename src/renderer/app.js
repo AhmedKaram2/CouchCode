@@ -825,9 +825,15 @@ async function updateQRCode() {
 
 // Load sessions
 async function loadSessions() {
-  sessions = await ipcRenderer.invoke('get-sessions');
+  try {
+    sessions = await ipcRenderer.invoke('get-sessions');
+  } catch (error) {
+    console.error('Failed to load sessions:', error);
+    showToast('Failed to load sessions', 'error');
+    sessions = [];
+  }
 
-  if (sessions.length === 0) {
+  if (!sessions || sessions.length === 0) {
     sessionsList.innerHTML = '<p class="no-sessions">No active sessions</p>';
     if (currentSessionId) {
       currentSessionId = null;
@@ -858,13 +864,20 @@ async function loadSessions() {
 
 // Create session
 async function createSession() {
-  const session = await ipcRenderer.invoke('create-session', {
-    name: `Session ${sessions.length + 1}`
-  });
-  if (session) {
-    await loadSessions();
-    attachToSession(session.id);
-    showToast('Session created', 'success');
+  try {
+    const session = await ipcRenderer.invoke('create-session', {
+      name: `Session ${sessions.length + 1}`
+    });
+    if (session) {
+      await loadSessions();
+      attachToSession(session.id);
+      showToast('Session created', 'success');
+    } else {
+      showToast('Failed to create session', 'error');
+    }
+  } catch (error) {
+    console.error('Failed to create session:', error);
+    showToast('Failed to create session: ' + (error.message || 'Unknown error'), 'error');
   }
 }
 
@@ -895,9 +908,14 @@ function attachToSession(sessionId) {
 
 // Kill session
 async function killSession(sessionId) {
-  await ipcRenderer.invoke('kill-session', sessionId);
-  await loadSessions();
-  showToast('Session terminated', 'success');
+  try {
+    await ipcRenderer.invoke('kill-session', sessionId);
+    await loadSessions();
+    showToast('Session terminated', 'success');
+  } catch (error) {
+    console.error('Failed to kill session:', error);
+    showToast('Failed to terminate session', 'error');
+  }
 }
 
 // Show terminal
@@ -1538,13 +1556,6 @@ async function loadTmuxStatus() {
   } catch (e) {
     console.error('Failed to load tmux status:', e);
   }
-}
-
-// Escape HTML for safe rendering
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 // Toggle tmux mode

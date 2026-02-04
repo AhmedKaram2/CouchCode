@@ -553,9 +553,17 @@ class TerminalRemoteApp {
       this.setupAutoEnterButton();
     }
 
-    // Handle visibility change for reconnection
+    // Handle visibility change for reconnection (debounced)
+    let lastVisibilityChange = 0;
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        // Debounce: ignore if less than 1 second since last change
+        if (now - lastVisibilityChange < 1000) {
+          return;
+        }
+        lastVisibilityChange = now;
+
         if (!this.isConnected()) {
           // WebSocket disconnected, reconnect
           this.connect();
@@ -1216,37 +1224,47 @@ class TerminalRemoteApp {
   showSmartPrompt(type) {
     if (!this.smartPromptBar) return;
 
-    let buttons = '';
+    // Clear existing content safely
+    this.smartPromptBar.textContent = '';
+
     switch (type) {
       case 'yesno':
-        buttons = `
-          <button class="smart-btn yes" onclick="app.handleAction('yes'); app.hideSmartPrompt();">
-            <span class="btn-icon">✓</span> Yes
-          </button>
-          <button class="smart-btn no" onclick="app.handleAction('no'); app.hideSmartPrompt();">
-            <span class="btn-icon">✗</span> No
-          </button>
-          <button class="smart-btn enter" onclick="app.handleAction('enter'); app.hideSmartPrompt();">
-            <span class="btn-icon">↵</span> Enter
-          </button>
-        `;
+        this.smartPromptBar.appendChild(this.createSmartButton('yes', '✓', 'Yes'));
+        this.smartPromptBar.appendChild(this.createSmartButton('no', '✗', 'No'));
+        this.smartPromptBar.appendChild(this.createSmartButton('enter', '↵', 'Enter'));
         break;
       case 'enter':
-        buttons = `
-          <button class="smart-btn enter" onclick="app.handleAction('enter'); app.hideSmartPrompt();">
-            <span class="btn-icon">↵</span> Press Enter
-          </button>
-        `;
+        this.smartPromptBar.appendChild(this.createSmartButton('enter', '↵', 'Press Enter'));
         break;
       case 'password':
-        buttons = `
-          <span class="prompt-label">Password required - type in input box</span>
-        `;
+        const label = document.createElement('span');
+        label.className = 'prompt-label';
+        label.textContent = 'Password required - type in input box';
+        this.smartPromptBar.appendChild(label);
         break;
     }
-    this.smartPromptBar.innerHTML = buttons;
     this.smartPromptBar.classList.add('visible');
     this.vibrate();
+  }
+
+  createSmartButton(action, icon, text) {
+    const btn = document.createElement('button');
+    btn.className = `smart-btn ${action}`;
+    btn.dataset.action = action;
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'btn-icon';
+    iconSpan.textContent = icon;
+
+    btn.appendChild(iconSpan);
+    btn.appendChild(document.createTextNode(' ' + text));
+
+    btn.addEventListener('click', () => {
+      this.handleAction(action);
+      this.hideSmartPrompt();
+    });
+
+    return btn;
   }
 
   hideSmartPrompt() {
@@ -1338,7 +1356,12 @@ class TerminalRemoteApp {
     };
 
     this.ws.onmessage = (event) => {
-      this.handleMessage(JSON.parse(event.data));
+      try {
+        const data = JSON.parse(event.data);
+        this.handleMessage(data);
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
+      }
     };
 
     this.ws.onclose = () => {
@@ -1482,7 +1505,23 @@ class TerminalRemoteApp {
       const response = await fetch('/api/sessions', {
         headers: { 'Authorization': `Bearer ${this.token}` }
       });
-      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.warn('Token expired or invalid, logging out');
+          this.logout();
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse sessions response:', parseError);
+        return;
+      }
       console.log('Sessions loaded:', data);
       this.sessions = data.sessions || [];
       this.updateSessionsList();
@@ -1517,6 +1556,11 @@ class TerminalRemoteApp {
   }
 
   startSessionPolling() {
+    // Guard against duplicate polling intervals
+    if (this.sessionPollInterval) {
+      console.log('Session polling already active');
+      return;
+    }
     this.sessionPollInterval = setInterval(() => {
       if (this.authenticated && this.isConnected()) {
         this.loadSessions();
@@ -1587,8 +1631,9 @@ class TerminalRemoteApp {
   }
 
   sendInput(data) {
-    if (!this.isConnected()) {
-      console.warn('sendInput: not connected, attempting reconnect');
+    // Validate connection state
+    if (!this.isConnected() || this.ws.readyState !== WebSocket.OPEN) {
+      console.warn('sendInput: WebSocket not open, attempting reconnect');
       this.connect();
       return false;
     }
@@ -1597,10 +1642,19 @@ class TerminalRemoteApp {
       this.loadSessions();
       return false;
     }
-    console.log('Sending input:', JSON.stringify(data), 'to session:', this.currentSessionId);
-    this.ws.send(JSON.stringify({ type: 'input', data }));
-    this.hideSmartPrompt();
-    return true;
+    if (!this.authenticated) {
+      console.warn('sendInput: not authenticated');
+      return false;
+    }
+
+    try {
+      this.ws.send(JSON.stringify({ type: 'input', data }));
+      this.hideSmartPrompt();
+      return true;
+    } catch (error) {
+      console.error('sendInput error:', error);
+      return false;
+    }
   }
 
   sendCommand() {
@@ -1641,23 +1695,56 @@ class TerminalRemoteApp {
 
   updateSessionsList() {
     this.sessionCount.textContent = this.sessions.length;
+
+    // Clear existing content safely
+    this.sessionsList.textContent = '';
+
     if (this.sessions.length === 0) {
-      this.sessionsList.innerHTML = '<p class="no-sessions">No sessions</p>';
+      const noSessions = document.createElement('p');
+      noSessions.className = 'no-sessions';
+      noSessions.textContent = 'No sessions';
+      this.sessionsList.appendChild(noSessions);
       return;
     }
-    this.sessionsList.innerHTML = this.sessions.map(session => `
-      <div class="session-item ${session.id === this.currentSessionId ? 'active' : ''}" data-id="${session.id}">
-        <div class="session-info" onclick="app.attachToSession('${session.id}'); app.toggleSessionsPanel(false);">
-          <span class="session-name">${this.escapeHtml(session.name)}</span>
-          <span class="session-shell">${session.shell}</span>
-        </div>
-        <button class="session-kill" onclick="app.killSession('${session.id}')" title="Kill session">
-          <svg viewBox="0 0 24 24" width="16" height="16">
-            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-          </svg>
-        </button>
-      </div>
-    `).join('');
+
+    this.sessions.forEach(session => {
+      const item = document.createElement('div');
+      item.className = `session-item ${session.id === this.currentSessionId ? 'active' : ''}`;
+      item.dataset.id = session.id;
+
+      const info = document.createElement('div');
+      info.className = 'session-info';
+
+      const name = document.createElement('span');
+      name.className = 'session-name';
+      name.textContent = session.name;
+
+      const shell = document.createElement('span');
+      shell.className = 'session-shell';
+      shell.textContent = session.shell;
+
+      info.appendChild(name);
+      info.appendChild(shell);
+
+      // Use event delegation via dataset
+      info.addEventListener('click', () => {
+        this.attachToSession(session.id);
+        this.toggleSessionsPanel(false);
+      });
+
+      const killBtn = document.createElement('button');
+      killBtn.className = 'session-kill';
+      killBtn.title = 'Kill session';
+      killBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>';
+      killBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.killSession(session.id);
+      });
+
+      item.appendChild(info);
+      item.appendChild(killBtn);
+      this.sessionsList.appendChild(item);
+    });
   }
 
   toggleSessionsPanel(show) {
@@ -1720,11 +1807,33 @@ class TerminalRemoteApp {
   }
 
   logout() {
+    // Clear sensitive data
     this.token = null;
+    this.authenticated = false;
+    this.currentSessionId = null;
+    this.sessions = [];
+
+    // Remove token from storage
     localStorage.removeItem('terminal-remote-token');
+
+    // Stop polling
+    this.stopSessionPolling();
+
+    // Close WebSocket connection
     if (this.ws) {
-      this.ws.close();
+      try {
+        this.ws.close();
+      } catch (e) {
+        console.error('Error closing WebSocket:', e);
+      }
+      this.ws = null;
     }
+
+    // Clear terminal
+    if (this.terminal) {
+      this.terminal.clear();
+    }
+
     this.showLoginScreen();
   }
 

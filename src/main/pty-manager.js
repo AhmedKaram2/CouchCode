@@ -1,9 +1,11 @@
 const pty = require('node-pty');
 const os = require('os');
 const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 const { EventEmitter } = require('events');
 const { execSync } = require('child_process');
+const { ptyLogger: logger } = require('./logger');
 
 class PTYManager extends EventEmitter {
   constructor() {
@@ -12,8 +14,52 @@ class PTYManager extends EventEmitter {
     this.availableShells = this.detectAvailableShells();
     this.preferredShell = null;
     this.tmuxPath = this.detectTmux();
-    this.tmuxEnabled = false; // Will be set by config
+    this.tmuxEnabled = false;
     this.tmuxSessionPrefix = 'couchcode';
+  }
+
+  /**
+   * Validate shell path is in our whitelist
+   */
+  isValidShell(shellPath) {
+    if (!shellPath || typeof shellPath !== 'string') return false;
+    return this.availableShells.some(s => s.path === shellPath);
+  }
+
+  /**
+   * Validate and sanitize session name
+   */
+  sanitizeSessionName(name) {
+    if (!name || typeof name !== 'string') return 'Session';
+    // Allow alphanumeric, spaces, dashes, underscores
+    const sanitized = name.trim().slice(0, 50).replace(/[^\w\s\-]/g, '');
+    return sanitized || 'Session';
+  }
+
+  /**
+   * Validate working directory path
+   */
+  validateCwd(cwd) {
+    if (!cwd || typeof cwd !== 'string') return os.homedir();
+
+    // Resolve to absolute path
+    const resolved = path.resolve(cwd);
+
+    // Prevent path traversal attacks
+    const homeDir = os.homedir();
+
+    // Check if path exists and is a directory
+    try {
+      const stats = fs.statSync(resolved);
+      if (!stats.isDirectory()) {
+        logger.warn('Invalid cwd: not a directory', { data: { cwd } });
+        return homeDir;
+      }
+      return resolved;
+    } catch (err) {
+      logger.warn('Invalid cwd: does not exist', { data: { cwd } });
+      return homeDir;
+    }
   }
 
   // Detect if tmux is available (also updates internal state)
@@ -21,7 +67,7 @@ class PTYManager extends EventEmitter {
     try {
       const tmuxPath = execSync('which tmux 2>/dev/null').toString().trim();
       if (tmuxPath) {
-        console.log('tmux detected at:', tmuxPath);
+        logger.info('tmux detected', { data: { path: tmuxPath } });
         this.tmuxPath = tmuxPath;
         return tmuxPath;
       }
@@ -33,13 +79,13 @@ class PTYManager extends EventEmitter {
     const commonPaths = ['/opt/homebrew/bin/tmux', '/usr/local/bin/tmux', '/usr/bin/tmux'];
     for (const p of commonPaths) {
       if (fs.existsSync(p)) {
-        console.log('tmux detected at:', p);
+        logger.info('tmux detected', { data: { path: p } });
         this.tmuxPath = p;
         return p;
       }
     }
 
-    console.log('tmux not found');
+    logger.debug('tmux not found');
     this.tmuxPath = null;
     return null;
   }
@@ -155,7 +201,7 @@ class PTYManager extends EventEmitter {
         }
       }
 
-      console.log('Available Windows shells:', shells.map(s => `${s.name} (${s.path})`).join(', '));
+      logger.info('Available Windows shells', { data: { shells: shells.map(s => s.name) } });
       return shells;
     }
 
@@ -200,7 +246,7 @@ class PTYManager extends EventEmitter {
       }
     }
 
-    console.log('Available shells:', shells.map(s => `${s.name} (${s.path})`).join(', '));
+    logger.info('Available shells', { data: { shells: shells.map(s => s.name) } });
     return shells;
   }
 
@@ -242,19 +288,33 @@ class PTYManager extends EventEmitter {
     return process.env.SHELL || '/bin/bash';
   }
 
-  // Create a new terminal session
+  /**
+   * Create a new terminal session with validation
+   */
   createSession(options = {}) {
     const sessionId = uuidv4();
-    const shell = options.shell || this.getDefaultShell();
-    const name = options.name || `Session ${this.sessions.size + 1}`;
-    const cwd = options.cwd || os.homedir();
 
-    const cols = options.cols || 80;
-    const rows = options.rows || 24;
+    // Validate shell path
+    let shell = options.shell;
+    if (shell && !this.isValidShell(shell)) {
+      logger.security('Attempted to use invalid shell', { details: shell });
+      shell = null;
+    }
+    shell = shell || this.getDefaultShell();
+
+    // Sanitize session name
+    const name = this.sanitizeSessionName(options.name) || `Session ${this.sessions.size + 1}`;
+
+    // Validate working directory
+    const cwd = this.validateCwd(options.cwd);
+
+    // Validate dimensions
+    const cols = Math.min(Math.max(parseInt(options.cols, 10) || 80, 1), 500);
+    const rows = Math.min(Math.max(parseInt(options.rows, 10) || 24, 1), 200);
 
     // Check if we should use tmux
     const useTmux = options.useTmux !== undefined ? options.useTmux : this.tmuxEnabled;
-    const attachToTmux = options.attachToTmux; // Specific tmux session to attach to
+    const attachToTmux = options.attachToTmux;
     const isWindows = os.platform() === 'win32';
 
     // Tmux is not available on Windows
@@ -299,7 +359,7 @@ class PTYManager extends EventEmitter {
       // CMD on Windows doesn't need special flags - uses system PATH
     }
 
-    console.log(`Creating PTY session: shell=${shell}, cwd=${cwd}, cols=${cols}, rows=${rows}, args=${JSON.stringify(args)}`);
+    logger.debug('Creating PTY session', { data: { shell, cwd, cols, rows, args } });
 
     // Get shell info for features
     const shellInfo = this.availableShells.find(s => s.path === shell) || { name: 'Unknown', icon: '💻' };
@@ -367,7 +427,7 @@ class PTYManager extends EventEmitter {
         env: shellEnv
       });
     } catch (err) {
-      console.error('Failed to spawn PTY:', err);
+      logger.error('Failed to spawn PTY', { error: err });
       throw err;
     }
 
@@ -399,7 +459,7 @@ class PTYManager extends EventEmitter {
 
     // Handle exit
     ptyProcess.onExit(({ exitCode, signal }) => {
-      console.log(`Session ${sessionId} exited with code ${exitCode}, signal ${signal}`);
+      logger.info('Session exited', { data: { sessionId, exitCode, signal } });
       this.emit('exit', sessionId, exitCode, signal);
       this.sessions.delete(sessionId);
     });
@@ -407,7 +467,7 @@ class PTYManager extends EventEmitter {
     this.sessions.set(sessionId, session);
     this.emit('created', sessionId, session);
 
-    console.log(`Session created: ${sessionId} (${shellInfo.name})`);
+    logger.info('Session created', { data: { sessionId, shell: shellInfo.name } });
 
     return {
       id: sessionId,
@@ -448,9 +508,9 @@ class PTYManager extends EventEmitter {
       // Create the tmux session first
       try {
         execSync(`${this.tmuxPath} ${tmuxArgs.join(' ')}`, { cwd });
-        console.log(`Created tmux session: ${tmuxSessionName}`);
+        logger.info('Created tmux session', { data: { tmuxSession: tmuxSessionName } });
       } catch (e) {
-        console.error('Failed to create tmux session:', e.message);
+        logger.error('Failed to create tmux session', { error: e });
         // Fall back to regular session
         return this.createSession({ ...options, useTmux: false });
       }
@@ -459,7 +519,7 @@ class PTYManager extends EventEmitter {
     // Now attach to the tmux session
     const attachArgs = ['attach-session', '-t', tmuxSessionName];
 
-    console.log(`Attaching to tmux session: ${tmuxSessionName}`);
+    logger.debug('Attaching to tmux session', { data: { tmuxSession: tmuxSessionName } });
 
     // Get shell info
     const shellInfo = this.availableShells.find(s => s.path === shell) || { name: 'tmux', icon: '🖥️' };
@@ -482,7 +542,7 @@ class PTYManager extends EventEmitter {
         env: shellEnv
       });
     } catch (err) {
-      console.error('Failed to attach to tmux session:', err);
+      logger.error('Failed to attach to tmux session', { error: err });
       // Clean up the tmux session if we created it
       if (isNewTmuxSession) {
         try {
@@ -520,7 +580,7 @@ class PTYManager extends EventEmitter {
 
     // Handle exit
     ptyProcess.onExit(({ exitCode, signal }) => {
-      console.log(`Tmux session ${sessionId} (${tmuxSessionName}) detached with code ${exitCode}`);
+      logger.info('Tmux session detached', { data: { sessionId, tmuxSession: tmuxSessionName, exitCode } });
       this.emit('exit', sessionId, exitCode, signal);
       this.sessions.delete(sessionId);
       // Note: tmux session continues running in background
@@ -529,7 +589,7 @@ class PTYManager extends EventEmitter {
     this.sessions.set(sessionId, session);
     this.emit('created', sessionId, session);
 
-    console.log(`Tmux session created: ${sessionId} -> ${tmuxSessionName}`);
+    logger.info('Tmux session created', { data: { sessionId, tmuxSession: tmuxSessionName } });
 
     return {
       id: sessionId,
@@ -549,7 +609,7 @@ class PTYManager extends EventEmitter {
 
     try {
       execSync(`${this.tmuxPath} kill-session -t ${tmuxSessionName} 2>/dev/null`);
-      console.log(`Killed tmux session: ${tmuxSessionName}`);
+      logger.info('Killed tmux session', { data: { tmuxSession: tmuxSessionName } });
       return true;
     } catch (e) {
       return false;
