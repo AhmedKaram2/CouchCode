@@ -2159,20 +2159,33 @@ body {
 
 /* Settings button is now in header - see header-btn styles */
 
-/* ==================== SNIPPETS MODAL ==================== */
-.snippets-modal {
-  max-width: 420px;
+/* ==================== COMMAND CENTER MODAL ==================== */
+.command-center-modal {
+  max-width: 480px;
+  width: 95%;
+  max-height: 85vh;
 }
 
-.snippets-header {
+.command-center-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(16, 185, 129, 0.1));
 }
 
-.snippets-header h3 {
+.command-center-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.command-center-title svg {
+  color: var(--purple-color);
+}
+
+.command-center-title h3 {
   font-size: 1.125rem;
   font-weight: 600;
 }
@@ -2196,77 +2209,140 @@ body {
   color: var(--text-primary);
 }
 
-.snippets-body {
+.command-center-body {
   padding: 16px;
 }
 
-.snippets-search {
+.command-search-container {
   margin-bottom: 12px;
 }
 
-.snippets-search input {
+.command-search-container input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: var(--background);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   color: var(--text-primary);
   font-size: 0.9375rem;
   outline: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
 }
 
-.snippets-search input:focus {
+.command-search-container input:focus {
   border-color: var(--purple-color);
+  box-shadow: 0 0 0 3px var(--purple-glow);
 }
 
-.snippets-tabs {
+.command-search-container input::placeholder {
+  color: var(--text-muted);
+}
+
+/* AI Suggestion Result */
+.ai-result {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(16, 185, 129, 0.1));
+  border: 1px solid var(--purple-color);
+  border-radius: 10px;
+}
+
+.ai-result.hidden {
+  display: none;
+}
+
+.ai-label {
+  font-size: 0.75rem;
+  color: var(--purple-color);
+  font-weight: 500;
+}
+
+.ai-result code {
+  flex: 1;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 0.875rem;
+  color: var(--primary-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-use-btn {
+  padding: 6px 14px;
+  background: var(--purple-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ai-use-btn:hover {
+  background: #7c3aed;
+  transform: scale(1.02);
+}
+
+/* Command Tabs */
+.command-tabs {
+  display: flex;
+  gap: 6px;
   margin-bottom: 12px;
   overflow-x: auto;
   padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.snippet-tab {
-  padding: 8px 14px;
-  font-size: 0.8125rem;
+.command-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.command-tab {
+  padding: 7px 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   background: var(--surface-elevated);
   border: 1px solid var(--border-color);
-  border-radius: 20px;
+  border-radius: 16px;
   color: var(--text-secondary);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
 }
 
-.snippet-tab:hover {
+.command-tab:hover {
   border-color: var(--text-secondary);
 }
 
-.snippet-tab.active {
+.command-tab.active {
   background: var(--purple-color);
   border-color: var(--purple-color);
   color: white;
 }
 
+/* Snippets List */
 .snippets-list {
-  max-height: 280px;
+  max-height: 45vh;
   overflow-y: auto;
-  margin-bottom: 12px;
+  padding-right: 4px;
 }
 
 .no-snippets {
   text-align: center;
-  padding: 24px;
+  padding: 32px 24px;
   color: var(--text-muted);
+  font-size: 0.9375rem;
 }
 
 .snippet-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 12px;
   padding: 12px;
   background: var(--surface-elevated);
   border: 1px solid var(--border-color);
@@ -2281,15 +2357,33 @@ body {
   background: rgba(139, 92, 246, 0.1);
 }
 
+.snippet-item:active {
+  transform: scale(0.98);
+}
+
+.snippet-icon {
+  font-size: 1.25rem;
+  width: 32px;
+  text-align: center;
+}
+
 .snippet-info {
   flex: 1;
   min-width: 0;
 }
 
+.snippet-name {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
 .snippet-cmd {
   display: block;
   font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--primary-color);
   margin-bottom: 2px;
   overflow: hidden;
@@ -2298,84 +2392,39 @@ body {
 }
 
 .snippet-desc {
-  font-size: 0.75rem;
+  display: block;
+  font-size: 0.6875rem;
   color: var(--text-muted);
 }
 
-.snippet-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.snippet-fav-btn,
 .snippet-run-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.15s;
-}
-
-.snippet-fav-btn:hover {
-  color: var(--warning-color);
-  border-color: var(--warning-color);
-}
-
-.snippet-fav-btn.active {
-  color: var(--warning-color);
-}
-
-.snippet-run-btn:hover {
-  color: var(--primary-color);
-  border-color: var(--primary-color);
-  background: rgba(16, 185, 129, 0.1);
-}
-
-.snippets-add {
-  display: flex;
-  gap: 8px;
-}
-
-.snippets-add input {
-  flex: 1;
-  padding: 10px 14px;
-  background: var(--background);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  outline: none;
-}
-
-.snippets-add input:focus {
-  border-color: var(--purple-color);
-}
-
-.snippet-add-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--purple-color);
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   color: white;
-  font-size: 1.25rem;
-  font-weight: bold;
+  font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 
-.snippet-add-btn:hover {
+.snippet-run-btn:hover {
   background: #7c3aed;
+  transform: scale(1.05);
+}
+
+/* Command Center Button in Input Bar */
+.command-center-btn {
+  color: var(--purple-color) !important;
+}
+
+.command-center-btn:hover {
+  background: var(--purple-glow) !important;
 }
 
 /* ==================== SETTINGS MODAL ==================== */

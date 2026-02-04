@@ -322,8 +322,10 @@ class TerminalRemoteApp {
     this.snippetsCloseBtn = document.getElementById('snippets-close-btn');
     this.snippetsSearchInput = document.getElementById('snippets-search-input');
     this.snippetsList = document.getElementById('snippets-list');
-    this.snippetNewInput = document.getElementById('snippet-new-input');
-    this.snippetAddBtn = document.getElementById('snippet-add-btn');
+    this.aiResult = document.getElementById('ai-result');
+    this.aiCommand = document.getElementById('ai-command');
+    this.aiUseBtn = document.getElementById('ai-use-btn');
+    this.commandTabs = document.querySelectorAll('.command-tab');
 
     // Settings
     this.settingsBtn = document.getElementById('settings-btn');
@@ -353,45 +355,142 @@ class TerminalRemoteApp {
     this.commandStartTime = null;
     this.longCommandThreshold = 5000; // 5 seconds
 
-    // Default snippets by category
-    this.defaultSnippets = {
-      git: [
-        { cmd: 'git status', desc: 'Check status' },
-        { cmd: 'git add .', desc: 'Stage all' },
-        { cmd: 'git commit -m ""', desc: 'Commit' },
-        { cmd: 'git push', desc: 'Push changes' },
-        { cmd: 'git pull', desc: 'Pull changes' },
-        { cmd: 'git log --oneline -10', desc: 'Recent commits' },
-        { cmd: 'git branch', desc: 'List branches' },
-        { cmd: 'git checkout -b ', desc: 'New branch' },
-        { cmd: 'git stash', desc: 'Stash changes' },
-        { cmd: 'git diff', desc: 'Show diff' },
-      ],
-      npm: [
-        { cmd: 'npm install', desc: 'Install deps' },
-        { cmd: 'npm start', desc: 'Start app' },
-        { cmd: 'npm run build', desc: 'Build' },
-        { cmd: 'npm test', desc: 'Run tests' },
-        { cmd: 'npm run dev', desc: 'Dev mode' },
-        { cmd: 'npm outdated', desc: 'Check updates' },
-        { cmd: 'npm audit', desc: 'Security audit' },
-        { cmd: 'npx ', desc: 'Run package' },
-      ],
-      system: [
-        { cmd: 'ls -la', desc: 'List files' },
-        { cmd: 'pwd', desc: 'Current dir' },
-        { cmd: 'cd ', desc: 'Change dir' },
-        { cmd: 'mkdir ', desc: 'Create dir' },
-        { cmd: 'rm -rf ', desc: 'Delete' },
-        { cmd: 'cat ', desc: 'View file' },
-        { cmd: 'grep -r "" .', desc: 'Search' },
-        { cmd: 'find . -name ""', desc: 'Find file' },
-        { cmd: 'ps aux', desc: 'Processes' },
-        { cmd: 'top', desc: 'System monitor' },
-      ]
+    // Smart snippets - 150+ commands organized by category
+    this.smartSnippets = [
+      // GIT
+      { name: 'Git Status', description: 'Show working tree status', command: 'git status', category: 'git', icon: '📊' },
+      { name: 'Git Diff', description: 'Show changes not yet staged', command: 'git diff', category: 'git', icon: '📝' },
+      { name: 'Git Log', description: 'Show commit history', command: 'git log --oneline -10', category: 'git', icon: '📜' },
+      { name: 'Git Branch', description: 'List all branches', command: 'git branch -a', category: 'git', icon: '🌿' },
+      { name: 'Git New Branch', description: 'Create and switch to new branch', command: 'git checkout -b feature/', category: 'git', icon: '🌱' },
+      { name: 'Git Pull', description: 'Pull latest changes', command: 'git pull', category: 'git', icon: '⬇️' },
+      { name: 'Git Push', description: 'Push commits to remote', command: 'git push', category: 'git', icon: '⬆️' },
+      { name: 'Git Stash', description: 'Stash current changes', command: 'git stash', category: 'git', icon: '📦' },
+      { name: 'Git Stash Pop', description: 'Apply and remove stash', command: 'git stash pop', category: 'git', icon: '📤' },
+      { name: 'Git Add All', description: 'Stage all changes', command: 'git add .', category: 'git', icon: '➕' },
+      { name: 'Git Commit', description: 'Commit with message', command: 'git commit -m ""', category: 'git', icon: '✅' },
+      { name: 'Git Reset', description: 'Unstage all changes', command: 'git reset HEAD', category: 'git', icon: '🔄' },
+      { name: 'Git Fetch', description: 'Fetch from remote', command: 'git fetch --all', category: 'git', icon: '📥' },
+      { name: 'Git Merge', description: 'Merge branch', command: 'git merge ', category: 'git', icon: '🔀' },
+      { name: 'Git Cherry Pick', description: 'Apply specific commit', command: 'git cherry-pick ', category: 'git', icon: '🍒' },
+      // FILES
+      { name: 'List Files', description: 'List all files including hidden', command: 'ls -la', category: 'files', icon: '📁' },
+      { name: 'List Tree', description: 'Show directory tree', command: 'tree -L 2', category: 'files', icon: '🌲' },
+      { name: 'Find Files', description: 'Find files by name', command: 'find . -name "*.js" -type f', category: 'files', icon: '🔍' },
+      { name: 'Search Content', description: 'Search text in files', command: 'grep -rn "" .', category: 'files', icon: '🔎' },
+      { name: 'File Size', description: 'Show file sizes', command: 'du -sh *', category: 'files', icon: '📏' },
+      { name: 'Create Directory', description: 'Create a new directory', command: 'mkdir -p ', category: 'files', icon: '📂' },
+      { name: 'Create File', description: 'Create empty file', command: 'touch ', category: 'files', icon: '📄' },
+      { name: 'Copy Files', description: 'Copy files', command: 'cp -r ', category: 'files', icon: '📋' },
+      { name: 'Move Files', description: 'Move or rename files', command: 'mv ', category: 'files', icon: '➡️' },
+      { name: 'Remove Files', description: 'Remove files', command: 'rm -i ', category: 'files', icon: '🗑️' },
+      { name: 'Compress', description: 'Create tar.gz archive', command: 'tar -czvf archive.tar.gz ', category: 'files', icon: '📦' },
+      { name: 'Extract', description: 'Extract archive', command: 'tar -xzvf ', category: 'files', icon: '📂' },
+      { name: 'Watch File', description: 'Monitor file changes', command: 'tail -f ', category: 'files', icon: '👁️' },
+      // NPM
+      { name: 'NPM Install', description: 'Install dependencies', command: 'npm install', category: 'npm', icon: '📦' },
+      { name: 'NPM Install Pkg', description: 'Install specific package', command: 'npm install ', category: 'npm', icon: '➕' },
+      { name: 'NPM Install Dev', description: 'Install as dev dependency', command: 'npm install -D ', category: 'npm', icon: '🔧' },
+      { name: 'NPM Start', description: 'Run start script', command: 'npm start', category: 'npm', icon: '▶️' },
+      { name: 'NPM Run Dev', description: 'Run development server', command: 'npm run dev', category: 'npm', icon: '🔧' },
+      { name: 'NPM Run Build', description: 'Build project', command: 'npm run build', category: 'npm', icon: '🔨' },
+      { name: 'NPM Test', description: 'Run tests', command: 'npm test', category: 'npm', icon: '🧪' },
+      { name: 'NPM Outdated', description: 'Check outdated packages', command: 'npm outdated', category: 'npm', icon: '📋' },
+      { name: 'NPM Audit', description: 'Security audit', command: 'npm audit', category: 'npm', icon: '🔒' },
+      { name: 'NPM List', description: 'List installed packages', command: 'npm list --depth=0', category: 'npm', icon: '📋' },
+      { name: 'Node Version', description: 'Check Node.js version', command: 'node -v && npm -v', category: 'npm', icon: '📦' },
+      { name: 'NPX Create Vite', description: 'Create Vite project', command: 'npm create vite@latest', category: 'npm', icon: '⚡' },
+      // DOCKER
+      { name: 'Docker PS', description: 'List running containers', command: 'docker ps', category: 'docker', icon: '🐳' },
+      { name: 'Docker PS All', description: 'List all containers', command: 'docker ps -a', category: 'docker', icon: '🐳' },
+      { name: 'Docker Images', description: 'List Docker images', command: 'docker images', category: 'docker', icon: '📦' },
+      { name: 'Docker Logs', description: 'Show container logs', command: 'docker logs -f ', category: 'docker', icon: '📜' },
+      { name: 'Docker Compose Up', description: 'Start services', command: 'docker-compose up -d', category: 'docker', icon: '🚀' },
+      { name: 'Docker Compose Down', description: 'Stop services', command: 'docker-compose down', category: 'docker', icon: '🛑' },
+      { name: 'Docker Stop All', description: 'Stop all containers', command: 'docker stop $(docker ps -q)', category: 'docker', icon: '🛑' },
+      { name: 'Docker Prune', description: 'Clean up resources', command: 'docker system prune -a', category: 'docker', icon: '🧹' },
+      { name: 'Docker Exec', description: 'Execute in container', command: 'docker exec -it  bash', category: 'docker', icon: '⚡' },
+      { name: 'Docker Build', description: 'Build image', command: 'docker build -t  .', category: 'docker', icon: '🔨' },
+      { name: 'Docker Run', description: 'Run container', command: 'docker run -it --rm ', category: 'docker', icon: '▶️' },
+      { name: 'Docker Stats', description: 'Show container stats', command: 'docker stats', category: 'docker', icon: '📊' },
+      // SYSTEM
+      { name: 'Disk Usage', description: 'Show disk space usage', command: 'df -h', category: 'system', icon: '💾' },
+      { name: 'Memory Usage', description: 'Show memory info', command: 'free -h 2>/dev/null || vm_stat', category: 'system', icon: '🧠' },
+      { name: 'Process List', description: 'List all processes', command: 'ps aux | head -20', category: 'system', icon: '📋' },
+      { name: 'Find Process', description: 'Find process by name', command: 'ps aux | grep ', category: 'system', icon: '🔍' },
+      { name: 'Kill Process', description: 'Kill process by PID', command: 'kill -9 ', category: 'system', icon: '💀' },
+      { name: 'System Info', description: 'Show system information', command: 'uname -a', category: 'system', icon: '💻' },
+      { name: 'Environment', description: 'Show environment variables', command: 'env | sort', category: 'system', icon: '⚙️' },
+      { name: 'Path Variable', description: 'Show PATH', command: 'echo $PATH | tr ":" "\\n"', category: 'system', icon: '🛤️' },
+      { name: 'Uptime', description: 'Show system uptime', command: 'uptime', category: 'system', icon: '⏱️' },
+      { name: 'History', description: 'Show command history', command: 'history | tail -30', category: 'system', icon: '📜' },
+      { name: 'Clear Screen', description: 'Clear terminal', command: 'clear', category: 'system', icon: '🧹' },
+      // NETWORK
+      { name: 'IP Address', description: 'Show local IP', command: 'ifconfig 2>/dev/null || ip addr', category: 'network', icon: '🌐' },
+      { name: 'Public IP', description: 'Show public IP', command: 'curl -s ifconfig.me', category: 'network', icon: '🌍' },
+      { name: 'Ping Test', description: 'Test connectivity', command: 'ping -c 4 google.com', category: 'network', icon: '📡' },
+      { name: 'Port Check', description: 'Check listening ports', command: 'netstat -tuln 2>/dev/null || ss -tuln', category: 'network', icon: '🔌' },
+      { name: 'DNS Lookup', description: 'Lookup DNS records', command: 'nslookup ', category: 'network', icon: '🔎' },
+      { name: 'Curl GET', description: 'Make GET request', command: 'curl -X GET ', category: 'network', icon: '🌍' },
+      { name: 'Curl POST', description: 'Make POST request', command: 'curl -X POST -H "Content-Type: application/json" -d \'{}\' ', category: 'network', icon: '📤' },
+      { name: 'Download', description: 'Download file', command: 'curl -O ', category: 'network', icon: '⬇️' },
+      { name: 'SSH Connect', description: 'Connect via SSH', command: 'ssh user@', category: 'network', icon: '🔐' },
+      { name: 'SSH Key Gen', description: 'Generate SSH key', command: 'ssh-keygen -t ed25519 -C ""', category: 'network', icon: '🔑' },
+      // PYTHON
+      { name: 'Python Version', description: 'Check Python version', command: 'python3 --version', category: 'python', icon: '🐍' },
+      { name: 'Pip Install', description: 'Install package', command: 'pip3 install ', category: 'python', icon: '📦' },
+      { name: 'Pip Install Req', description: 'Install from requirements', command: 'pip3 install -r requirements.txt', category: 'python', icon: '📋' },
+      { name: 'Pip Freeze', description: 'Export requirements', command: 'pip3 freeze > requirements.txt', category: 'python', icon: '❄️' },
+      { name: 'Create Venv', description: 'Create virtual environment', command: 'python3 -m venv venv', category: 'python', icon: '🔧' },
+      { name: 'Activate Venv', description: 'Activate virtual env', command: 'source venv/bin/activate', category: 'python', icon: '▶️' },
+      { name: 'Python Run', description: 'Run Python script', command: 'python3 ', category: 'python', icon: '▶️' },
+      { name: 'Pytest', description: 'Run pytest tests', command: 'pytest', category: 'python', icon: '🧪' },
+      { name: 'Django Server', description: 'Run Django server', command: 'python manage.py runserver', category: 'python', icon: '🌐' },
+      { name: 'Flask Run', description: 'Run Flask app', command: 'flask run', category: 'python', icon: '🌐' },
+      // KUBERNETES
+      { name: 'K8s Get Pods', description: 'List all pods', command: 'kubectl get pods', category: 'k8s', icon: '☸️' },
+      { name: 'K8s Get All', description: 'List all resources', command: 'kubectl get all', category: 'k8s', icon: '☸️' },
+      { name: 'K8s Get Services', description: 'List services', command: 'kubectl get services', category: 'k8s', icon: '🔗' },
+      { name: 'K8s Logs', description: 'View pod logs', command: 'kubectl logs -f ', category: 'k8s', icon: '📜' },
+      { name: 'K8s Exec', description: 'Execute in pod', command: 'kubectl exec -it  -- /bin/bash', category: 'k8s', icon: '⚡' },
+      { name: 'K8s Apply', description: 'Apply configuration', command: 'kubectl apply -f ', category: 'k8s', icon: '✅' },
+      { name: 'K8s Describe', description: 'Describe pod', command: 'kubectl describe pod ', category: 'k8s', icon: '🔍' },
+      { name: 'K8s Scale', description: 'Scale deployment', command: 'kubectl scale deployment/ --replicas=', category: 'k8s', icon: '📈' },
+      { name: 'K8s Port Forward', description: 'Forward local port', command: 'kubectl port-forward  8080:80', category: 'k8s', icon: '🔌' },
+      // DATABASE
+      { name: 'MySQL Connect', description: 'Connect to MySQL', command: 'mysql -u root -p', category: 'database', icon: '🐬' },
+      { name: 'PostgreSQL Connect', description: 'Connect to PostgreSQL', command: 'psql -U postgres', category: 'database', icon: '🐘' },
+      { name: 'MongoDB Shell', description: 'Start MongoDB shell', command: 'mongosh', category: 'database', icon: '🍃' },
+      { name: 'Redis CLI', description: 'Connect to Redis', command: 'redis-cli', category: 'database', icon: '🔴' },
+      { name: 'SQLite Open', description: 'Open SQLite database', command: 'sqlite3 ', category: 'database', icon: '💾' },
+      { name: 'MySQL Dump', description: 'Export MySQL database', command: 'mysqldump -u root -p  > backup.sql', category: 'database', icon: '💾' },
+      { name: 'PG Dump', description: 'Export PostgreSQL database', command: 'pg_dump -U postgres  > backup.sql', category: 'database', icon: '💾' },
+    ];
+
+    // Natural language to command mapping
+    this.nlToCommand = {
+      'list': 'ls -la', 'list files': 'ls -la', 'show files': 'ls -la',
+      'find': 'find . -name', 'search files': 'find . -name',
+      'disk usage': 'du -sh *', 'disk space': 'df -h',
+      'create folder': 'mkdir -p', 'new folder': 'mkdir -p',
+      'git status': 'git status', 'check git': 'git status',
+      'git changes': 'git diff', 'show changes': 'git diff',
+      'git history': 'git log --oneline -10', 'commit history': 'git log --oneline -10',
+      'git branches': 'git branch -a', 'list branches': 'git branch -a',
+      'create branch': 'git checkout -b', 'new branch': 'git checkout -b',
+      'git pull': 'git pull', 'pull changes': 'git pull',
+      'git push': 'git push', 'push changes': 'git push',
+      'stage all': 'git add .', 'add all': 'git add .',
+      'system info': 'uname -a', 'memory': 'free -h 2>/dev/null || vm_stat',
+      'processes': 'ps aux | head -20', 'uptime': 'uptime',
+      'ip address': 'ifconfig 2>/dev/null || ip addr', 'my ip': 'ifconfig',
+      'ping': 'ping -c 4', 'test connection': 'ping -c 4 google.com',
+      'docker containers': 'docker ps -a', 'running containers': 'docker ps',
+      'docker images': 'docker images', 'docker up': 'docker-compose up -d',
+      'docker down': 'docker-compose down', 'clear': 'clear', 'history': 'history | tail -20',
     };
 
-    this.currentSnippetTab = 'favorites';
+    this.currentSnippetCategory = 'all';
   }
 
   bindEvents() {
@@ -526,21 +625,24 @@ class TerminalRemoteApp {
       }
     });
 
-    // Snippets modal events
+    // Command Center modal events
     this.snippetsBtn?.addEventListener('click', () => this.showSnippetsModal());
     this.snippetsCloseBtn?.addEventListener('click', () => this.hideSnippetsModal());
     this.snippetsModal?.addEventListener('click', (e) => {
       if (e.target === this.snippetsModal) this.hideSnippetsModal();
     });
     this.snippetsSearchInput?.addEventListener('input', () => this.filterSnippets());
-    this.snippetAddBtn?.addEventListener('click', () => this.addCustomSnippet());
-    this.snippetNewInput?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') this.addCustomSnippet();
+
+    // AI Use button
+    this.aiUseBtn?.addEventListener('click', () => {
+      if (this.aiCommand?.textContent) {
+        this.runSnippet(this.aiCommand.textContent);
+      }
     });
 
-    // Snippet tabs
-    document.querySelectorAll('.snippet-tab').forEach(tab => {
-      tab.addEventListener('click', () => this.switchSnippetTab(tab.dataset.tab));
+    // Command Center category tabs
+    document.querySelectorAll('.command-tab').forEach(tab => {
+      tab.addEventListener('click', () => this.switchSnippetCategory(tab.dataset.category));
     });
 
     // Settings modal events
@@ -2136,6 +2238,12 @@ class TerminalRemoteApp {
   showSnippetsModal() {
     if (this.snippetsModal) {
       this.snippetsModal.classList.remove('hidden');
+      if (this.snippetsSearchInput) {
+        this.snippetsSearchInput.value = '';
+      }
+      if (this.aiResult) {
+        this.aiResult.classList.add('hidden');
+      }
       this.renderSnippets();
       setTimeout(() => this.snippetsSearchInput?.focus(), 100);
     }
@@ -2148,10 +2256,10 @@ class TerminalRemoteApp {
     }
   }
 
-  switchSnippetTab(tab) {
-    this.currentSnippetTab = tab;
-    document.querySelectorAll('.snippet-tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.tab === tab);
+  switchSnippetCategory(category) {
+    this.currentSnippetCategory = category;
+    document.querySelectorAll('.command-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.category === category);
     });
     this.renderSnippets();
     this.vibrate();
@@ -2160,48 +2268,44 @@ class TerminalRemoteApp {
   renderSnippets() {
     if (!this.snippetsList) return;
 
-    let snippets = [];
     const searchTerm = this.snippetsSearchInput?.value?.toLowerCase() || '';
+    let filtered = this.smartSnippets;
 
-    switch (this.currentSnippetTab) {
-      case 'favorites':
-        snippets = this.favoriteCommands.map(cmd => ({ cmd, desc: 'Favorite', fav: true }));
-        break;
-      case 'history':
-        snippets = this.commandHistory.slice(-20).reverse().map(cmd => ({ cmd, desc: 'Recent' }));
-        break;
-      case 'git':
-      case 'npm':
-      case 'system':
-        snippets = this.defaultSnippets[this.currentSnippetTab] || [];
-        break;
+    // Filter by category
+    if (this.currentSnippetCategory !== 'all') {
+      filtered = filtered.filter(s => s.category === this.currentSnippetCategory);
     }
 
-    // Filter by search
+    // Filter by search term
     if (searchTerm) {
-      snippets = snippets.filter(s =>
-        s.cmd.toLowerCase().includes(searchTerm) ||
-        s.desc.toLowerCase().includes(searchTerm)
+      filtered = filtered.filter(s =>
+        s.name.toLowerCase().includes(searchTerm) ||
+        s.description.toLowerCase().includes(searchTerm) ||
+        s.command.toLowerCase().includes(searchTerm)
       );
+
+      // Also check for AI suggestion
+      this.checkAISuggestion(searchTerm);
+    } else {
+      if (this.aiResult) {
+        this.aiResult.classList.add('hidden');
+      }
     }
 
-    if (snippets.length === 0) {
-      this.snippetsList.innerHTML = '<p class="no-snippets">No commands found</p>';
+    if (filtered.length === 0) {
+      this.snippetsList.innerHTML = '<p class="no-snippets">No commands found. Try a different search term.</p>';
       return;
     }
 
-    this.snippetsList.innerHTML = snippets.map((s, i) => `
-      <div class="snippet-item" data-cmd="${this.escapeHtml(s.cmd)}">
+    this.snippetsList.innerHTML = filtered.map(s => `
+      <div class="snippet-item" data-cmd="${this.escapeHtml(s.command)}">
+        <div class="snippet-icon">${s.icon || '📋'}</div>
         <div class="snippet-info">
-          <code class="snippet-cmd">${this.escapeHtml(s.cmd)}</code>
-          <span class="snippet-desc">${this.escapeHtml(s.desc)}</span>
+          <span class="snippet-name">${this.escapeHtml(s.name)}</span>
+          <code class="snippet-cmd">${this.escapeHtml(s.command)}</code>
+          <span class="snippet-desc">${this.escapeHtml(s.description)}</span>
         </div>
-        <div class="snippet-actions">
-          <button class="snippet-fav-btn ${s.fav ? 'active' : ''}" data-fav="${this.escapeHtml(s.cmd)}" title="Favorite">
-            ${s.fav ? '★' : '☆'}
-          </button>
-          <button class="snippet-run-btn" data-run="${this.escapeHtml(s.cmd)}" title="Run">▶</button>
-        </div>
+        <button class="snippet-run-btn" data-run="${this.escapeHtml(s.command)}" title="Run">▶</button>
       </div>
     `).join('');
 
@@ -2213,18 +2317,39 @@ class TerminalRemoteApp {
       });
     });
 
-    this.snippetsList.querySelectorAll('.snippet-fav-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.toggleFavorite(btn.dataset.fav);
-      });
-    });
-
     this.snippetsList.querySelectorAll('.snippet-item').forEach(item => {
       item.addEventListener('click', () => {
         this.runSnippet(item.dataset.cmd);
       });
     });
+  }
+
+  checkAISuggestion(searchTerm) {
+    if (!this.aiResult || !this.aiCommand) return;
+
+    // Check for natural language match
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    let suggestion = null;
+
+    // Check direct matches first
+    if (this.nlToCommand[normalizedSearch]) {
+      suggestion = this.nlToCommand[normalizedSearch];
+    } else {
+      // Check partial matches
+      for (const [key, cmd] of Object.entries(this.nlToCommand)) {
+        if (normalizedSearch.includes(key) || key.includes(normalizedSearch)) {
+          suggestion = cmd;
+          break;
+        }
+      }
+    }
+
+    if (suggestion) {
+      this.aiCommand.textContent = suggestion;
+      this.aiResult.classList.remove('hidden');
+    } else {
+      this.aiResult.classList.add('hidden');
+    }
   }
 
   filterSnippets() {
