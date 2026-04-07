@@ -1,0 +1,20 @@
+{
+    // CouchCode server URL
+    "server_url": "http://localhost:3847",
+
+    // API token for authentication (generate in CouchCode Settings > IDE Integration)
+    "api_token": "",
+
+    // PIN for authentication (leave empty to use API token or auto-approve)
+    "pin": "",
+
+    // Path to couchcode CLI (leave empty for auto-detection)
+    "cli_path": "",
+
+    // Terminal emulator command for interactive mode (leave empty for default)
+    // Examples:
+    //   macOS: "open -a Terminal"
+    //   Linux: "gnome-terminal --"
+    //   Windows: "cmd /c start"
+    "terminal_command": ""
+}

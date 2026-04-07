@@ -1106,6 +1106,132 @@ function setupEventListeners() {
     });
   });
 
+  // ==================== AUTO-APPROVE SETTINGS ====================
+  const autoApproveEnabled = document.getElementById('auto-approve-enabled');
+  const autoApproveLocalhost = document.getElementById('auto-approve-localhost');
+  const autoApproveExpiry = document.getElementById('auto-approve-expiry');
+  const clearTrustedDevicesBtn = document.getElementById('clear-trusted-devices');
+  const createApiTokenBtn = document.getElementById('create-api-token');
+  const apiTokenNameInput = document.getElementById('api-token-name');
+
+  // Load auto-approve settings
+  async function loadAutoApproveSettings() {
+    try {
+      const settings = await ipcRenderer.invoke('get-auto-approve-settings');
+      if (autoApproveEnabled) autoApproveEnabled.checked = settings.enabled;
+      if (autoApproveLocalhost) autoApproveLocalhost.checked = settings.localhostAutoApprove;
+      if (autoApproveExpiry) autoApproveExpiry.value = settings.expiryDays;
+
+      // Render trusted devices
+      const devicesList = document.getElementById('trusted-devices-list');
+      if (devicesList && settings.trustedDevices) {
+        if (settings.trustedDevices.length === 0) {
+          devicesList.innerHTML = '<p class="setting-hint">No trusted devices</p>';
+        } else {
+          devicesList.innerHTML = settings.trustedDevices.map(d => `
+            <div class="trusted-device-item">
+              <div class="device-info">
+                <span class="device-name">${escapeHtml(d.name)}</span>
+                <span class="device-meta">Added ${new Date(d.createdAt).toLocaleDateString()} · Last seen ${new Date(d.lastSeen).toLocaleDateString()}</span>
+              </div>
+              <button class="btn-icon btn-danger" data-remove-device="${d.fingerprint}" title="Remove">
+                <svg viewBox="0 0 24 24" width="14" height="14">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+          `).join('');
+
+          // Add remove device listeners
+          devicesList.querySelectorAll('[data-remove-device]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              await ipcRenderer.invoke('remove-trusted-device', btn.dataset.removeDevice);
+              await loadAutoApproveSettings();
+              showToast('Device removed', 'success');
+            });
+          });
+        }
+      }
+
+      // Render API tokens
+      const tokensList = document.getElementById('api-tokens-list');
+      if (tokensList && settings.apiTokens) {
+        if (settings.apiTokens.length === 0) {
+          tokensList.innerHTML = '<p class="setting-hint">No API tokens</p>';
+        } else {
+          tokensList.innerHTML = settings.apiTokens.map(t => `
+            <div class="api-token-item">
+              <div class="token-info">
+                <span class="token-name">${escapeHtml(t.name)}</span>
+                <code class="token-preview">${t.tokenPreview}</code>
+              </div>
+              <button class="btn-icon btn-danger" data-revoke-token="${t.id}" title="Revoke">
+                <svg viewBox="0 0 24 24" width="14" height="14">
+                  <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+              </button>
+            </div>
+          `).join('');
+
+          tokensList.querySelectorAll('[data-revoke-token]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              await ipcRenderer.invoke('revoke-api-token', btn.dataset.revokeToken);
+              await loadAutoApproveSettings();
+              showToast('Token revoked', 'success');
+            });
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load auto-approve settings:', error);
+    }
+  }
+
+  if (autoApproveEnabled) {
+    autoApproveEnabled.addEventListener('change', async () => {
+      await ipcRenderer.invoke('toggle-auto-approve', autoApproveEnabled.checked);
+      showToast(autoApproveEnabled.checked ? 'Auto-approve enabled' : 'Auto-approve disabled', 'success');
+    });
+  }
+
+  if (autoApproveLocalhost) {
+    autoApproveLocalhost.addEventListener('change', async () => {
+      await ipcRenderer.invoke('toggle-localhost-auto-approve', autoApproveLocalhost.checked);
+      showToast('Localhost auto-approve ' + (autoApproveLocalhost.checked ? 'enabled' : 'disabled'), 'success');
+    });
+  }
+
+  if (autoApproveExpiry) {
+    autoApproveExpiry.addEventListener('change', async () => {
+      await ipcRenderer.invoke('set-auto-approve-expiry', parseInt(autoApproveExpiry.value, 10));
+    });
+  }
+
+  if (clearTrustedDevicesBtn) {
+    clearTrustedDevicesBtn.addEventListener('click', async () => {
+      await ipcRenderer.invoke('clear-trusted-devices');
+      await loadAutoApproveSettings();
+      showToast('All trusted devices cleared', 'success');
+    });
+  }
+
+  if (createApiTokenBtn) {
+    createApiTokenBtn.addEventListener('click', async () => {
+      const name = apiTokenNameInput?.value?.trim() || 'API Token';
+      const token = await ipcRenderer.invoke('create-api-token', name, 'full');
+      if (token && token.token) {
+        // Show the full token once (copy to clipboard)
+        await navigator.clipboard.writeText(token.token);
+        showToast(`Token created & copied to clipboard! Save it now - it won't be shown again.`, 'success');
+        if (apiTokenNameInput) apiTokenNameInput.value = '';
+        await loadAutoApproveSettings();
+      }
+    });
+  }
+
+  // Load auto-approve settings when settings modal opens
+  settingsBtn?.addEventListener('click', loadAutoApproveSettings);
+
   // Shell selection
   if (shellSelect) {
     shellSelect.addEventListener('change', async () => {

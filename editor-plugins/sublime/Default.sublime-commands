@@ -1,0 +1,7 @@
+[
+    { "caption": "CouchCode: Open Remote Terminal", "command": "couchcode_open_terminal" },
+    { "caption": "CouchCode: Execute Command", "command": "couchcode_exec" },
+    { "caption": "CouchCode: List Sessions", "command": "couchcode_sessions" },
+    { "caption": "CouchCode: Show Status", "command": "couchcode_status" },
+    { "caption": "CouchCode: Open in Browser", "command": "couchcode_open_browser" }
+]

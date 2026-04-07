@@ -1,0 +1,524 @@
+#!/usr/bin/env node
+
+/**
+ * CouchCode CLI - Universal IDE connector
+ *
+ * Connect to CouchCode from any terminal, IDE, or editor.
+ * Works with VSCode, JetBrains, Vim/Neovim, Sublime Text, Emacs, and more.
+ *
+ * Usage:
+ *   couchcode connect [--url URL] [--token TOKEN] [--pin PIN]
+ *   couchcode exec <command> [--session SESSION]
+ *   couchcode sessions [--json]
+ *   couchcode attach <session-id>
+ *   couchcode token create <name>
+ *   couchcode status
+ *   couchcode config set <key> <value>
+ *   couchcode config get <key>
+ */
+
+const WebSocket = require('ws');
+const http = require('http');
+const https = require('https');
+const readline = require('readline');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+
+// Config file path
+const CONFIG_DIR = path.join(os.homedir(), '.couchcode');
+const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
+
+// Default configuration
+const DEFAULTS = {
+  serverUrl: 'http://localhost:3847',
+  apiToken: '',
+  pin: '',
+  defaultSession: '',
+  autoConnect: true
+};
+
+// ==================== Config Management ====================
+
+function ensureConfigDir() {
+  if (!fs.existsSync(CONFIG_DIR)) {
+    fs.mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  }
+}
+
+function loadConfig() {
+  ensureConfigDir();
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const data = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+      return { ...DEFAULTS, ...data };
+    }
+  } catch (e) {
+    // Ignore parse errors
+  }
+  return { ...DEFAULTS };
+}
+
+function saveConfig(config) {
+  ensureConfigDir();
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { mode: 0o600 });
+}
+
+function getConfig(key) {
+  const config = loadConfig();
+  return config[key];
+}
+
+function setConfig(key, value) {
+  const config = loadConfig();
+  config[key] = value;
+  saveConfig(config);
+}
+
+// ==================== HTTP Helpers ====================
+
+function httpRequest(url, options = {}) {
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url);
+    const client = parsedUrl.protocol === 'https:' ? https : http;
+
+    const req = client.request(url, {
+      method: options.method || 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, data: JSON.parse(data) });
+        } catch {
+          resolve({ status: res.statusCode, data });
+        }
+      });
+    });
+
+    req.on('error', reject);
+    if (options.body) req.write(JSON.stringify(options.body));
+    req.end();
+  });
+}
+
+// ==================== Auth ====================
+
+async function authenticate(serverUrl, token, pin) {
+  // Try API token first
+  if (token) {
+    const res = await httpRequest(`${serverUrl}/api/auth/login`, {
+      method: 'POST',
+      body: { apiToken: token }
+    });
+    if (res.status === 200 && res.data.token) {
+      return res.data.token;
+    }
+  }
+
+  // Try PIN
+  if (pin) {
+    const res = await httpRequest(`${serverUrl}/api/auth/login`, {
+      method: 'POST',
+      body: { pin }
+    });
+    if (res.status === 200 && res.data.token) {
+      return res.data.token;
+    }
+    throw new Error(res.data.error || 'Authentication failed');
+  }
+
+  // Try auto-approve (localhost)
+  const res = await httpRequest(`${serverUrl}/api/auth/login`, {
+    method: 'POST',
+    body: { deviceFingerprint: `cli-${os.hostname()}`, deviceName: `CLI (${os.hostname()})` }
+  });
+  if (res.status === 200 && res.data.token && res.data.autoApproved) {
+    return res.data.token;
+  }
+
+  throw new Error('Authentication required. Use --token or --pin, or enable auto-approve for localhost.');
+}
+
+// ==================== Commands ====================
+
+async function cmdStatus(args) {
+  const config = loadConfig();
+  const serverUrl = args.url || config.serverUrl;
+
+  try {
+    const res = await httpRequest(`${serverUrl}/api/status`);
+    if (res.status === 200) {
+      const s = res.data;
+      console.log(`CouchCode Server Status`);
+      console.log(`  URL:              ${serverUrl}`);
+      console.log(`  Version:          ${s.version}`);
+      console.log(`  Uptime:           ${Math.floor(s.uptime)}s`);
+      console.log(`  Active Sessions:  ${s.activeSessions}`);
+      console.log(`  Connected Clients: ${s.connectedClients}`);
+    } else {
+      console.error('Server returned:', res.status);
+      process.exit(1);
+    }
+  } catch (e) {
+    console.error(`Cannot connect to ${serverUrl}: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+async function cmdSessions(args) {
+  const config = loadConfig();
+  const serverUrl = args.url || config.serverUrl;
+  const token = args.token || config.apiToken;
+  const pin = args.pin || config.pin;
+
+  try {
+    const jwt = await authenticate(serverUrl, token, pin);
+    const res = await httpRequest(`${serverUrl}/api/sessions`, {
+      headers: { Authorization: `Bearer ${jwt}` }
+    });
+
+    if (res.status === 200) {
+      const sessions = res.data.sessions || [];
+      if (args.json) {
+        console.log(JSON.stringify(sessions, null, 2));
+      } else if (sessions.length === 0) {
+        console.log('No active sessions');
+      } else {
+        console.log('Active Sessions:');
+        sessions.forEach(s => {
+          console.log(`  ${s.id}  ${s.name}  (${s.shell})`);
+        });
+      }
+    }
+  } catch (e) {
+    console.error(`Error: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+async function cmdExec(args) {
+  const config = loadConfig();
+  const serverUrl = args.url || config.serverUrl;
+  const token = args.token || config.apiToken;
+  const pin = args.pin || config.pin;
+  const command = args._.slice(1).join(' ');
+
+  if (!command) {
+    console.error('Usage: couchcode exec <command>');
+    process.exit(1);
+  }
+
+  try {
+    const jwt = await authenticate(serverUrl, token, pin);
+    const wsUrl = serverUrl.replace(/^http/, 'ws');
+    const ws = new WebSocket(wsUrl);
+
+    ws.on('open', () => {
+      ws.send(JSON.stringify({ type: 'auth', token: jwt }));
+    });
+
+    let authenticated = false;
+    let sessionId = null;
+
+    ws.on('message', (data) => {
+      const msg = JSON.parse(data.toString());
+
+      switch (msg.type) {
+        case 'auth_success':
+          authenticated = true;
+          // Create a session to run the command
+          ws.send(JSON.stringify({ type: 'create_session', name: 'cli-exec' }));
+          break;
+
+        case 'session_created':
+          sessionId = msg.session.id;
+          ws.send(JSON.stringify({ type: 'attach', sessionId }));
+          break;
+
+        case 'attached':
+          // Send the command
+          setTimeout(() => {
+            ws.send(JSON.stringify({ type: 'input', data: command + '\r' }));
+            // Wait for output then exit
+            setTimeout(() => {
+              ws.close();
+              process.exit(0);
+            }, 3000);
+          }, 500);
+          break;
+
+        case 'output':
+          process.stdout.write(msg.data);
+          break;
+
+        case 'error':
+          console.error('Server error:', msg.message);
+          ws.close();
+          process.exit(1);
+          break;
+      }
+    });
+
+    ws.on('error', (e) => {
+      console.error('WebSocket error:', e.message);
+      process.exit(1);
+    });
+  } catch (e) {
+    console.error(`Error: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+async function cmdConnect(args) {
+  const config = loadConfig();
+  const serverUrl = args.url || config.serverUrl;
+  const token = args.token || config.apiToken;
+  const pin = args.pin || config.pin;
+
+  try {
+    const jwt = await authenticate(serverUrl, token, pin);
+    const wsUrl = serverUrl.replace(/^http/, 'ws');
+    const ws = new WebSocket(wsUrl);
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false
+    });
+
+    ws.on('open', () => {
+      ws.send(JSON.stringify({ type: 'auth', token: jwt }));
+    });
+
+    let sessionId = args.session || null;
+
+    ws.on('message', (data) => {
+      const msg = JSON.parse(data.toString());
+
+      switch (msg.type) {
+        case 'auth_success':
+          if (sessionId) {
+            ws.send(JSON.stringify({ type: 'attach', sessionId }));
+          } else {
+            ws.send(JSON.stringify({ type: 'create_session', name: `cli-${os.hostname()}` }));
+          }
+          break;
+
+        case 'session_created':
+          sessionId = msg.session.id;
+          ws.send(JSON.stringify({ type: 'attach', sessionId }));
+          break;
+
+        case 'attached':
+          // Enable raw mode for interactive terminal
+          if (process.stdin.isTTY) {
+            process.stdin.setRawMode(true);
+            process.stdin.resume();
+            process.stdin.on('data', (data) => {
+              ws.send(JSON.stringify({ type: 'input', data: data.toString() }));
+            });
+
+            // Handle terminal resize
+            process.stdout.on('resize', () => {
+              ws.send(JSON.stringify({
+                type: 'resize',
+                cols: process.stdout.columns,
+                rows: process.stdout.rows
+              }));
+            });
+
+            // Send initial size
+            ws.send(JSON.stringify({
+              type: 'resize',
+              cols: process.stdout.columns || 80,
+              rows: process.stdout.rows || 24
+            }));
+          } else {
+            // Pipe mode
+            rl.on('line', (line) => {
+              ws.send(JSON.stringify({ type: 'input', data: line + '\r' }));
+            });
+          }
+          break;
+
+        case 'output':
+          process.stdout.write(msg.data);
+          break;
+
+        case 'history':
+          process.stdout.write(msg.data);
+          break;
+
+        case 'session_ended':
+          console.error('\nSession ended.');
+          cleanup();
+          break;
+
+        case 'error':
+          console.error('\nError:', msg.message);
+          break;
+      }
+    });
+
+    ws.on('close', () => {
+      cleanup();
+    });
+
+    ws.on('error', (e) => {
+      console.error('Connection error:', e.message);
+      cleanup();
+    });
+
+    function cleanup() {
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(false);
+      }
+      rl.close();
+      process.exit(0);
+    }
+
+    // Handle Ctrl+C gracefully
+    process.on('SIGINT', () => {
+      ws.close();
+      cleanup();
+    });
+
+  } catch (e) {
+    console.error(`Error: ${e.message}`);
+    process.exit(1);
+  }
+}
+
+function cmdConfig(args) {
+  const subCmd = args._[1];
+  const key = args._[2];
+  const value = args._[3];
+
+  if (subCmd === 'set' && key && value !== undefined) {
+    setConfig(key, value);
+    console.log(`Set ${key} = ${value}`);
+  } else if (subCmd === 'get' && key) {
+    const val = getConfig(key);
+    console.log(val !== undefined ? val : '(not set)');
+  } else if (subCmd === 'list' || !subCmd) {
+    const config = loadConfig();
+    // Mask sensitive values
+    const display = { ...config };
+    if (display.apiToken) display.apiToken = display.apiToken.substring(0, 8) + '...';
+    if (display.pin) display.pin = '****';
+    console.log(JSON.stringify(display, null, 2));
+  } else {
+    console.log('Usage:');
+    console.log('  couchcode config set <key> <value>');
+    console.log('  couchcode config get <key>');
+    console.log('  couchcode config list');
+    console.log('\nKeys: serverUrl, apiToken, pin, defaultSession, autoConnect');
+  }
+}
+
+function showHelp() {
+  console.log(`
+CouchCode CLI - Universal IDE Connector
+
+Usage:
+  couchcode <command> [options]
+
+Commands:
+  connect     Interactive terminal session (default)
+  exec        Execute a command and print output
+  sessions    List active sessions
+  status      Show server status
+  config      Manage CLI configuration
+  help        Show this help
+
+Options:
+  --url URL       Server URL (default: http://localhost:3847)
+  --token TOKEN   API token for authentication
+  --pin PIN       PIN for authentication
+  --session ID    Attach to specific session
+  --json          Output in JSON format
+
+Examples:
+  couchcode connect                     # Interactive terminal
+  couchcode connect --url http://192.168.1.5:3847
+  couchcode exec "git status"           # Run a command
+  couchcode sessions --json             # List sessions as JSON
+  couchcode config set apiToken abc123  # Save API token
+  couchcode config set serverUrl http://192.168.1.5:3847
+
+IDE Setup:
+  VSCode:     Set couchcode.apiToken in settings.json
+  JetBrains:  Set token in Tools > CouchCode
+  Vim/Neovim: let g:couchcode_token = 'YOUR_TOKEN'
+  Sublime:    Set api_token in CouchCode.sublime-settings
+`);
+}
+
+// ==================== Argument Parsing ====================
+
+function parseArgs(argv) {
+  const args = { _: [] };
+  let i = 0;
+  while (i < argv.length) {
+    const arg = argv[i];
+    if (arg.startsWith('--')) {
+      const key = arg.slice(2);
+      const next = argv[i + 1];
+      if (next && !next.startsWith('--')) {
+        args[key] = next;
+        i += 2;
+      } else {
+        args[key] = true;
+        i++;
+      }
+    } else {
+      args._.push(arg);
+      i++;
+    }
+  }
+  return args;
+}
+
+// ==================== Main ====================
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const command = args._[0] || 'connect';
+
+  switch (command) {
+    case 'connect':
+      await cmdConnect(args);
+      break;
+    case 'exec':
+      await cmdExec(args);
+      break;
+    case 'sessions':
+      await cmdSessions(args);
+      break;
+    case 'status':
+      await cmdStatus(args);
+      break;
+    case 'config':
+      cmdConfig(args);
+      break;
+    case 'help':
+    case '--help':
+    case '-h':
+      showHelp();
+      break;
+    default:
+      console.error(`Unknown command: ${command}`);
+      showHelp();
+      process.exit(1);
+  }
+}
+
+main().catch(e => {
+  console.error('Fatal error:', e.message);
+  process.exit(1);
+});

@@ -1,0 +1,88 @@
+<idea-plugin>
+    <id>com.couchcode.plugin</id>
+    <name>CouchCode - Remote Terminal</name>
+    <vendor email="support@couchcode.dev" url="https://github.com/AhmedKaram2/CouchCode">Ahmed Karam</vendor>
+
+    <description><![CDATA[
+    <h2>CouchCode - Remote Terminal Access</h2>
+    <p>Control your terminal remotely from any JetBrains IDE. Connect to your CouchCode server
+    and access terminal sessions directly within your IDE.</p>
+
+    <h3>Features</h3>
+    <ul>
+        <li>Remote terminal access within JetBrains IDEs</li>
+        <li>API token authentication (no PIN needed)</li>
+        <li>Auto-approve for localhost connections</li>
+        <li>Session management - create, attach, and switch sessions</li>
+        <li>Native terminal integration</li>
+        <li>Status bar indicator</li>
+        <li>Works with IntelliJ IDEA, WebStorm, PyCharm, GoLand, and all JetBrains IDEs</li>
+    </ul>
+
+    <h3>Setup</h3>
+    <ol>
+        <li>Install and start the CouchCode desktop app</li>
+        <li>Go to Settings > Tools > CouchCode</li>
+        <li>Enter your server URL and API token</li>
+        <li>Use Tools > CouchCode > Open Remote Terminal</li>
+    </ol>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Settings -->
+        <applicationConfigurable
+                parentId="tools"
+                instance="com.couchcode.plugin.CouchCodeSettingsConfigurable"
+                id="com.couchcode.plugin.settings"
+                displayName="CouchCode"/>
+
+        <applicationService
+                serviceImplementation="com.couchcode.plugin.CouchCodeSettings"/>
+
+        <!-- Tool Window -->
+        <toolWindow
+                id="CouchCode"
+                anchor="bottom"
+                icon="/icons/couchcode.svg"
+                factoryClass="com.couchcode.plugin.CouchCodeToolWindowFactory"/>
+
+        <!-- Status Bar Widget -->
+        <statusBarWidgetFactory
+                id="CouchCodeStatus"
+                implementation="com.couchcode.plugin.CouchCodeStatusBarFactory"/>
+    </extensions>
+
+    <actions>
+        <group id="CouchCode.Menu" text="CouchCode" popup="true">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="CouchCode.OpenTerminal"
+                    class="com.couchcode.plugin.actions.OpenTerminalAction"
+                    text="Open Remote Terminal"
+                    description="Open a CouchCode remote terminal session"
+                    icon="AllIcons.Debugger.Console"/>
+
+            <action id="CouchCode.ListSessions"
+                    class="com.couchcode.plugin.actions.ListSessionsAction"
+                    text="List Sessions"
+                    description="List active CouchCode sessions"/>
+
+            <action id="CouchCode.OpenInBrowser"
+                    class="com.couchcode.plugin.actions.OpenInBrowserAction"
+                    text="Open in Browser"
+                    description="Open CouchCode in default browser"/>
+        </group>
+
+        <!-- Keyboard shortcut -->
+        <action id="CouchCode.QuickOpen"
+                class="com.couchcode.plugin.actions.OpenTerminalAction"
+                text="CouchCode: Open Remote Terminal">
+            <keyboard-shortcut first-keystroke="control shift C" keymap="$default"/>
+            <keyboard-shortcut first-keystroke="meta shift C" keymap="Mac OS X"/>
+            <keyboard-shortcut first-keystroke="meta shift C" keymap="Mac OS X 10.5+"/>
+        </action>
+    </actions>
+</idea-plugin>

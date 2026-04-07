@@ -117,9 +117,45 @@ const auth = {
   },
 
   /**
+   * Check if a connection should be auto-approved
+   * Returns { approved: boolean, reason: string }
+   */
+  checkAutoApprove(ip, deviceFingerprint) {
+    // Check localhost auto-approve
+    if (config.getAutoApproveLocalhost()) {
+      const localhostPatterns = ['127.0.0.1', '::1', '::ffff:127.0.0.1', 'localhost'];
+      if (localhostPatterns.some(p => ip.includes(p))) {
+        logger.auth('Auto-approve (localhost)', true, { ip });
+        return { approved: true, reason: 'localhost' };
+      }
+    }
+
+    // Check trusted device
+    if (deviceFingerprint && config.isTrustedDevice(deviceFingerprint)) {
+      logger.auth('Auto-approve (trusted device)', true, { ip, deviceFingerprint });
+      return { approved: true, reason: 'trusted_device' };
+    }
+
+    // Check API token (handled separately)
+    return { approved: false, reason: 'none' };
+  },
+
+  /**
+   * Authenticate with API token (for IDE integrations)
+   */
+  authenticateApiToken(token) {
+    const tokenEntry = config.validateApiToken(token);
+    if (tokenEntry) {
+      logger.auth('API token auth', true, { tokenName: tokenEntry.name });
+      return { success: true, token: this.generateToken({ apiToken: true, scope: tokenEntry.scope }) };
+    }
+    return { success: false, error: 'Invalid API token' };
+  },
+
+  /**
    * Authenticate with PIN (with rate limiting)
    */
-  async authenticate(pin, ip = 'unknown') {
+  async authenticate(pin, ip = 'unknown', options = {}) {
     // Check rate limiting
     const rateLimitStatus = this.isRateLimited(ip);
     if (rateLimitStatus.limited) {
@@ -161,6 +197,16 @@ const auth = {
     if (valid) {
       this.clearFailedAttempts(ip);
       logger.auth('PIN verification', true, { ip });
+
+      // If trustDevice requested, add to trusted devices
+      if (options.trustDevice && options.deviceFingerprint) {
+        config.addTrustedDevice({
+          fingerprint: options.deviceFingerprint,
+          name: options.deviceName || 'Unknown Device'
+        });
+        logger.auth('Device trusted', true, { ip, fingerprint: options.deviceFingerprint });
+      }
+
       return { success: true, token: this.generateToken() };
     }
 

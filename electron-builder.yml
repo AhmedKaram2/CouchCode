@@ -1,6 +1,6 @@
-appId: com.terminalremote.app
-productName: Terminal Remote
-copyright: Copyright © 2024 Terminal Remote
+appId: com.ahmedkaram.couchcode
+productName: CouchCode
+copyright: Copyright © 2024 CouchCode
 
 directories:
   output: dist
@@ -8,6 +8,7 @@ directories:
 
 files:
   - src/**/*
+  - cli/**/*
   - package.json
   - "!src/**/*.map"
   - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"

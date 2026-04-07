@@ -1,10 +1,12 @@
 const vscode = require('vscode');
 const CouchCodePanel = require('./couchCodePanel');
 const SessionsTreeProvider = require('./sessionsTreeProvider');
+const CouchCodeTerminal = require('./couchCodeTerminal');
 
 let currentPanel = undefined;
 let sessionsTreeProvider = null;
 let statusBarItem = null;
+let connectionStatus = 'disconnected'; // disconnected, connecting, connected
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -17,12 +19,14 @@ function activate(context) {
     vscode.window.registerTreeDataProvider('couchcode-sessions', sessionsTreeProvider);
 
     // Create status bar item
-    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-    statusBarItem.command = 'couchcode.openPanel';
-    statusBarItem.text = '$(terminal) CouchCode';
-    statusBarItem.tooltip = 'Open CouchCode Remote Terminal';
-    statusBarItem.show();
-    context.subscriptions.push(statusBarItem);
+    const config = vscode.workspace.getConfiguration('couchcode');
+    if (config.get('showInStatusBar') !== false) {
+        statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+        statusBarItem.command = 'couchcode.openPanel';
+        updateStatusBar('disconnected');
+        statusBarItem.show();
+        context.subscriptions.push(statusBarItem);
+    }
 
     // Register command to open CouchCode panel
     let openPanelCommand = vscode.commands.registerCommand('couchcode.openPanel', () => {
@@ -32,7 +36,7 @@ function activate(context) {
         if (currentPanel) {
             currentPanel.reveal();
         } else {
-            currentPanel = CouchCodePanel.createOrShow(context.extensionUri, serverUrl);
+            currentPanel = CouchCodePanel.createOrShow(context.extensionUri, serverUrl, getAuthParams());
 
             // Reset when panel is closed
             currentPanel.onDidDispose(() => {
@@ -64,6 +68,7 @@ function activate(context) {
 
         // Open the panel
         vscode.commands.executeCommand('couchcode.openPanel');
+        updateStatusBar('connecting');
     });
 
     // Register command to disconnect
@@ -71,6 +76,7 @@ function activate(context) {
         if (currentPanel) {
             currentPanel.dispose();
             currentPanel = undefined;
+            updateStatusBar('disconnected');
             vscode.window.showInformationMessage('Disconnected from CouchCode server');
         }
     });
@@ -93,9 +99,6 @@ function activate(context) {
 
     // Register command to create new terminal
     let createTerminalCommand = vscode.commands.registerCommand('couchcode.createTerminal', async () => {
-        const config = vscode.workspace.getConfiguration('couchcode');
-        const serverUrl = config.get('serverUrl') || 'http://localhost:3847';
-
         vscode.window.showInformationMessage(
             'Create a new terminal session in the CouchCode panel or mobile app',
             'Open Panel'
@@ -104,6 +107,21 @@ function activate(context) {
                 vscode.commands.executeCommand('couchcode.openPanel');
             }
         });
+    });
+
+    // Register command to open native remote terminal
+    let openNativeTerminalCommand = vscode.commands.registerCommand('couchcode.openNativeTerminal', async () => {
+        const config = vscode.workspace.getConfiguration('couchcode');
+        const serverUrl = config.get('serverUrl') || 'http://localhost:3847';
+
+        try {
+            const authParams = getAuthParams();
+            const terminal = CouchCodeTerminal.create(serverUrl, authParams);
+            terminal.show();
+            updateStatusBar('connected');
+        } catch (e) {
+            vscode.window.showErrorMessage(`Failed to open CouchCode terminal: ${e.message}`);
+        }
     });
 
     // Register command to refresh sessions
@@ -133,15 +151,26 @@ function activate(context) {
         disconnectCommand,
         showQRCommand,
         createTerminalCommand,
+        openNativeTerminalCommand,
         refreshSessionsCommand,
         selectSessionCommand,
         openInBrowserCommand
     );
 
     // Auto-connect if configured
-    const config = vscode.workspace.getConfiguration('couchcode');
     if (config.get('autoConnect')) {
-        vscode.commands.executeCommand('couchcode.openPanel');
+        // Delay auto-connect to let VS Code settle
+        setTimeout(() => {
+            const serverUrl = config.get('serverUrl');
+            if (serverUrl) {
+                sessionsTreeProvider.setServerUrl(serverUrl);
+                updateStatusBar('connecting');
+                // Verify server is accessible
+                checkServerStatus(serverUrl).then(ok => {
+                    updateStatusBar(ok ? 'connected' : 'disconnected');
+                });
+            }
+        }, 2000);
     }
 
     // Update sessions tree provider with server URL
@@ -150,6 +179,75 @@ function activate(context) {
         if (serverUrl) {
             sessionsTreeProvider.setServerUrl(serverUrl);
         }
+    }
+
+    // Watch for config changes
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(e => {
+            if (e.affectsConfiguration('couchcode')) {
+                const config = vscode.workspace.getConfiguration('couchcode');
+                if (sessionsTreeProvider) {
+                    sessionsTreeProvider.setServerUrl(config.get('serverUrl'));
+                }
+            }
+        })
+    );
+}
+
+/**
+ * Get authentication parameters from configuration
+ */
+function getAuthParams() {
+    const config = vscode.workspace.getConfiguration('couchcode');
+    return {
+        apiToken: config.get('apiToken') || '',
+        pin: config.get('pin') || '',
+        autoApprove: config.get('autoApprove') !== false
+    };
+}
+
+/**
+ * Check if server is accessible
+ */
+async function checkServerStatus(serverUrl) {
+    try {
+        const http = require('http');
+        return new Promise((resolve) => {
+            const req = http.get(`${serverUrl}/api/status`, { timeout: 3000 }, (res) => {
+                resolve(res.statusCode === 200);
+            });
+            req.on('error', () => resolve(false));
+            req.on('timeout', () => { req.destroy(); resolve(false); });
+        });
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Update status bar appearance
+ */
+function updateStatusBar(status) {
+    if (!statusBarItem) return;
+    connectionStatus = status;
+
+    switch (status) {
+        case 'connected':
+            statusBarItem.text = '$(terminal) CouchCode';
+            statusBarItem.tooltip = 'CouchCode: Connected - Click to open terminal';
+            statusBarItem.backgroundColor = undefined;
+            break;
+        case 'connecting':
+            statusBarItem.text = '$(sync~spin) CouchCode';
+            statusBarItem.tooltip = 'CouchCode: Connecting...';
+            statusBarItem.backgroundColor = undefined;
+            break;
+        case 'disconnected':
+        default:
+            statusBarItem.text = '$(terminal) CouchCode';
+            statusBarItem.tooltip = 'CouchCode: Disconnected - Click to connect';
+            statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+            break;
     }
 }
 

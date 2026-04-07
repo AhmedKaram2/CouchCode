@@ -15,7 +15,14 @@ const store = new Store({
     commandHistory: [],
     autoUpdateEnabled: true,
     lastUpdateCheck: null,
-    skipVersion: null
+    skipVersion: null,
+    // Auto-approve settings
+    autoApproveEnabled: false,
+    trustedDevices: [],           // { id, name, fingerprint, createdAt, lastSeen }
+    autoApproveLocalhost: true,   // Always auto-approve localhost connections
+    autoApproveExpiry: 30,        // Days before trusted device expires
+    // IDE integration
+    apiTokens: []                 // { id, name, token, createdAt, scope }
   }
 });
 
@@ -32,7 +39,10 @@ const config = {
       hasPin: !!store.get('pinHash'),
       startOnLogin: store.get('startOnLogin'),
       startMinimized: store.get('startMinimized'),
-      cloudRelayEnabled: store.get('cloudRelayEnabled')
+      cloudRelayEnabled: store.get('cloudRelayEnabled'),
+      autoApproveEnabled: store.get('autoApproveEnabled'),
+      autoApproveLocalhost: store.get('autoApproveLocalhost') !== false,
+      autoUpdateEnabled: store.get('autoUpdateEnabled') !== false
     };
   },
 
@@ -139,6 +149,111 @@ const config = {
 
   updateLastCheckTime() {
     store.set('lastUpdateCheck', new Date().toISOString());
+  },
+
+  // ==================== AUTO-APPROVE ====================
+
+  getAutoApproveEnabled() {
+    return store.get('autoApproveEnabled') === true;
+  },
+
+  setAutoApproveEnabled(enabled) {
+    store.set('autoApproveEnabled', !!enabled);
+  },
+
+  getAutoApproveLocalhost() {
+    return store.get('autoApproveLocalhost') !== false; // Default true
+  },
+
+  setAutoApproveLocalhost(enabled) {
+    store.set('autoApproveLocalhost', !!enabled);
+  },
+
+  getAutoApproveExpiry() {
+    return store.get('autoApproveExpiry') || 30;
+  },
+
+  setAutoApproveExpiry(days) {
+    store.set('autoApproveExpiry', Math.max(1, Math.min(365, parseInt(days, 10) || 30)));
+  },
+
+  // Trusted devices management
+  getTrustedDevices() {
+    const devices = store.get('trustedDevices') || [];
+    const expiryDays = this.getAutoApproveExpiry();
+    const now = Date.now();
+    // Filter out expired devices
+    return devices.filter(d => {
+      const age = (now - new Date(d.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      return age < expiryDays;
+    });
+  },
+
+  addTrustedDevice(device) {
+    const devices = this.getTrustedDevices();
+    // Remove existing device with same fingerprint
+    const filtered = devices.filter(d => d.fingerprint !== device.fingerprint);
+    filtered.push({
+      id: device.id || uuidv4(),
+      name: device.name || 'Unknown Device',
+      fingerprint: device.fingerprint,
+      createdAt: new Date().toISOString(),
+      lastSeen: new Date().toISOString()
+    });
+    store.set('trustedDevices', filtered);
+  },
+
+  removeTrustedDevice(fingerprint) {
+    const devices = this.getTrustedDevices();
+    store.set('trustedDevices', devices.filter(d => d.fingerprint !== fingerprint));
+  },
+
+  isTrustedDevice(fingerprint) {
+    if (!this.getAutoApproveEnabled()) return false;
+    const devices = this.getTrustedDevices();
+    const device = devices.find(d => d.fingerprint === fingerprint);
+    if (device) {
+      // Update last seen
+      device.lastSeen = new Date().toISOString();
+      store.set('trustedDevices', this.getTrustedDevices());
+      return true;
+    }
+    return false;
+  },
+
+  clearTrustedDevices() {
+    store.set('trustedDevices', []);
+  },
+
+  // ==================== API TOKENS (IDE Integration) ====================
+
+  getApiTokens() {
+    return store.get('apiTokens') || [];
+  },
+
+  createApiToken(name, scope = 'full') {
+    const tokens = this.getApiTokens();
+    const token = uuidv4() + '-' + uuidv4();
+    const entry = {
+      id: uuidv4(),
+      name: name || 'API Token',
+      token,
+      createdAt: new Date().toISOString(),
+      scope
+    };
+    tokens.push(entry);
+    store.set('apiTokens', tokens);
+    return entry;
+  },
+
+  validateApiToken(token) {
+    const tokens = this.getApiTokens();
+    return tokens.find(t => t.token === token) || null;
+  },
+
+  revokeApiToken(id) {
+    const tokens = this.getApiTokens();
+    store.set('apiTokens', tokens.filter(t => t.id !== id));
   }
 };
 

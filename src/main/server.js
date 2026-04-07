@@ -144,13 +144,36 @@ class Server {
     // Authentication
     this.app.post('/api/auth/login', async (req, res) => {
       try {
-        const { pin } = req.body;
+        const { pin, deviceFingerprint, deviceName, trustDevice, apiToken } = req.body;
+        const clientIP = req.ip || req.connection?.remoteAddress || 'unknown';
+
+        // API token authentication (for IDE integrations)
+        if (apiToken) {
+          const result = auth.authenticateApiToken(apiToken);
+          if (result.success) {
+            const expiry = auth.getTokenExpiry();
+            return res.json({ token: result.token, expiresIn: expiry.expiresInSeconds, autoApproved: true });
+          }
+          return res.status(401).json({ error: result.error });
+        }
+
+        // Auto-approve check
+        const autoApprove = auth.checkAutoApprove(clientIP, deviceFingerprint);
+        if (autoApprove.approved) {
+          const token = auth.generateToken({ autoApproved: true, reason: autoApprove.reason });
+          const expiry = auth.getTokenExpiry();
+          return res.json({ token, expiresIn: expiry.expiresInSeconds, autoApproved: true, reason: autoApprove.reason });
+        }
+
         if (!pin) {
           return res.status(400).json({ error: 'PIN is required' });
         }
 
-        const clientIP = req.ip || req.connection?.remoteAddress || 'unknown';
-        const result = await auth.authenticate(pin, clientIP);
+        const result = await auth.authenticate(pin, clientIP, {
+          trustDevice: !!trustDevice,
+          deviceFingerprint,
+          deviceName
+        });
 
         if (result.success) {
           const expiry = auth.getTokenExpiry();
@@ -169,9 +192,49 @@ class Server {
       }
     });
 
-    // Check if PIN is set
+    // Check if PIN is set and auto-approve status
     this.app.get('/api/auth/status', (req, res) => {
-      res.json({ pinRequired: config.hasPin() });
+      const clientIP = req.ip || req.connection?.remoteAddress || 'unknown';
+      const autoApproveEnabled = config.getAutoApproveEnabled();
+      const localhostAutoApprove = config.getAutoApproveLocalhost();
+      const isLocalhost = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].some(p => (clientIP || '').includes(p));
+
+      res.json({
+        pinRequired: config.hasPin(),
+        autoApproveEnabled,
+        localhostAutoApprove: localhostAutoApprove && isLocalhost,
+        canAutoApprove: (localhostAutoApprove && isLocalhost) || autoApproveEnabled
+      });
+    });
+
+    // Manage trusted devices (protected)
+    this.app.get('/api/auth/trusted-devices', auth.middleware, (req, res) => {
+      res.json({ devices: config.getTrustedDevices() });
+    });
+
+    this.app.delete('/api/auth/trusted-devices/:fingerprint', auth.middleware, (req, res) => {
+      config.removeTrustedDevice(req.params.fingerprint);
+      res.json({ success: true });
+    });
+
+    // API token management (protected)
+    this.app.get('/api/auth/api-tokens', auth.middleware, (req, res) => {
+      const tokens = config.getApiTokens().map(t => ({
+        id: t.id, name: t.name, createdAt: t.createdAt, scope: t.scope,
+        tokenPreview: t.token.substring(0, 8) + '...'
+      }));
+      res.json({ tokens });
+    });
+
+    this.app.post('/api/auth/api-tokens', auth.middleware, (req, res) => {
+      const { name, scope } = req.body;
+      const token = config.createApiToken(name, scope);
+      res.json({ token }); // Return full token only on creation
+    });
+
+    this.app.delete('/api/auth/api-tokens/:id', auth.middleware, (req, res) => {
+      config.revokeApiToken(req.params.id);
+      res.json({ success: true });
     });
 
     // Get sessions (protected)

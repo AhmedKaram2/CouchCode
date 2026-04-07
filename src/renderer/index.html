@@ -278,6 +278,60 @@
             When enabled, new sessions use tmux so you can attach from your local terminal with: <code>tmux attach -t couchcode-*</code>
           </p>
         </div>
+        <!-- Auto-Approve -->
+        <div class="setting-section">
+          <h4>Auto-Approve</h4>
+          <p class="setting-hint">Skip PIN authentication for trusted connections. Great for IDE integrations and frequent use.</p>
+          <div class="setting-row checkbox-row">
+            <label>
+              <input type="checkbox" id="auto-approve-localhost">
+              <span>Auto-approve localhost connections</span>
+            </label>
+          </div>
+          <div class="setting-row checkbox-row">
+            <label>
+              <input type="checkbox" id="auto-approve-enabled">
+              <span>Auto-approve trusted devices</span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <label for="auto-approve-expiry">Trust expiry (days)</label>
+            <input type="number" id="auto-approve-expiry" min="1" max="365" value="30" style="width: 80px;">
+          </div>
+          <div id="trusted-devices-list" class="trusted-devices-list">
+            <!-- Populated dynamically -->
+          </div>
+          <div class="setting-row" style="margin-top: 8px;">
+            <button id="clear-trusted-devices" class="btn-secondary btn-small">Clear All Trusted Devices</button>
+          </div>
+        </div>
+        <!-- IDE Integration -->
+        <div class="setting-section">
+          <h4>IDE Integration</h4>
+          <p class="setting-hint">Generate API tokens for IDE plugins and CLI tools to connect without PIN.</p>
+          <div class="setting-row">
+            <div class="input-group">
+              <input type="text" id="api-token-name" placeholder="Token name (e.g., VSCode, JetBrains)">
+              <button id="create-api-token" class="btn-secondary">Generate</button>
+            </div>
+          </div>
+          <div id="api-tokens-list" class="api-tokens-list">
+            <!-- Populated dynamically -->
+          </div>
+          <div class="setting-row" style="margin-top: 8px;">
+            <div class="ide-instructions">
+              <details>
+                <summary>Setup Instructions</summary>
+                <div class="ide-setup-content">
+                  <p><strong>VSCode:</strong> Set <code>couchcode.apiToken</code> in settings</p>
+                  <p><strong>JetBrains:</strong> Set token in CouchCode plugin settings</p>
+                  <p><strong>CLI:</strong> <code>couchcode connect --token YOUR_TOKEN</code></p>
+                  <p><strong>Vim/Neovim:</strong> <code>:CouchCode connect YOUR_TOKEN</code></p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
         <!-- Startup Options -->
         <div class="setting-section">
           <h4>Startup Options</h4>

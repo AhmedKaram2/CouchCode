@@ -1,0 +1,30 @@
+{
+  "name": "couchcode-cli",
+  "version": "1.0.0",
+  "description": "CouchCode CLI - Universal IDE connector for remote terminal access",
+  "main": "couchcode",
+  "bin": {
+    "couchcode": "./couchcode"
+  },
+  "keywords": [
+    "terminal",
+    "remote",
+    "ide",
+    "cli",
+    "vscode",
+    "jetbrains",
+    "vim",
+    "neovim",
+    "ssh"
+  ],
+  "author": "Ahmed Karam",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AhmedKaram2/CouchCode.git",
+    "directory": "cli"
+  }
+}

@@ -3,6 +3,9 @@
   "version": "1.6.0",
   "description": "Code from your couch - Control your terminal remotely from any device",
   "main": "src/main/main.js",
+  "bin": {
+    "couchcode": "./cli/couchcode"
+  },
   "author": "Ahmed Karam",
   "license": "MIT",
   "repository": {
@@ -66,6 +69,7 @@
     },
     "files": [
       "src/**/*",
+      "cli/**/*",
       "package.json"
     ],
     "extraResources": [

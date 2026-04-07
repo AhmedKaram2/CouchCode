@@ -1859,3 +1859,114 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+/* ==================== Auto-Approve & IDE Integration ==================== */
+
+.trusted-devices-list,
+.api-tokens-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+
+.trusted-device-item,
+.api-token-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin: 4px 0;
+  background: var(--surface-light, #161b22);
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #30363d);
+}
+
+.device-info,
+.token-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.device-name,
+.token-name {
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--text-primary, #f0f6fc);
+}
+
+.device-meta {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b949e);
+}
+
+.token-preview {
+  font-family: 'Menlo', 'Monaco', monospace;
+  font-size: 0.7rem;
+  color: var(--text-secondary, #8b949e);
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.btn-icon.btn-danger {
+  color: #f85149;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.btn-icon.btn-danger:hover {
+  background: rgba(248, 81, 73, 0.15);
+}
+
+.btn-small {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+
+.ide-instructions {
+  width: 100%;
+}
+
+.ide-instructions details {
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 6px;
+  padding: 0;
+}
+
+.ide-instructions summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #8b949e);
+  user-select: none;
+}
+
+.ide-instructions summary:hover {
+  color: var(--text-primary, #f0f6fc);
+}
+
+.ide-setup-content {
+  padding: 8px 12px 12px;
+  border-top: 1px solid var(--border-color, #30363d);
+}
+
+.ide-setup-content p {
+  margin: 6px 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #8b949e);
+  line-height: 1.4;
+}
+
+.ide-setup-content code {
+  background: rgba(255,255,255,0.06);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-family: 'Menlo', 'Monaco', monospace;
+}
