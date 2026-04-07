@@ -150,17 +150,120 @@ class TerminalRemoteApp {
     }
   }
 
-  init() {
+  // Generate a unique device fingerprint for auto-approve
+  getDeviceFingerprint() {
+    let fingerprint = this.getSafeStorage('device-fingerprint', '');
+    if (!fingerprint) {
+      fingerprint = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 9);
+      this.setSafeStorage('device-fingerprint', fingerprint);
+    }
+    return fingerprint;
+  }
+
+  getDeviceName() {
+    const ua = navigator.userAgent;
+    if (/iPhone/.test(ua)) return 'iPhone';
+    if (/iPad/.test(ua)) return 'iPad';
+    if (/Android/.test(ua)) return 'Android';
+    if (/Mac/.test(ua)) return 'Mac';
+    if (/Windows/.test(ua)) return 'Windows';
+    if (/Linux/.test(ua)) return 'Linux';
+    return 'Browser';
+  }
+
+  async tryAutoApprove() {
+    try {
+      // Check if auto-approve is available
+      const statusRes = await fetch('/api/auth/status');
+      const status = await statusRes.json();
+
+      if (!status.canAutoApprove) return false;
+
+      // Try auto-approve login
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceFingerprint: this.getDeviceFingerprint(),
+          deviceName: this.getDeviceName()
+        })
+      });
+
+      const data = await response.json();
+      if (response.ok && data.token && data.autoApproved) {
+        this.token = data.token;
+        localStorage.setItem('terminal-remote-token', this.token);
+        return true;
+      }
+    } catch (e) {
+      console.log('Auto-approve not available:', e.message);
+    }
+    return false;
+  }
+
+  async init() {
     this.bindElements();
     this.bindEvents();
     this.registerServiceWorker();
     this.initSpeechRecognition();
 
+    // Check for URL-based auth params (from IDE embeds)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlApiToken = urlParams.get('apiToken');
+    const urlPin = urlParams.get('pin');
+
     if (this.token) {
       this.showAppScreen();
       this.connect();
-    } else {
+    } else if (urlApiToken) {
+      // IDE embed: authenticate with API token from URL
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiToken: urlApiToken })
+        });
+        const data = await response.json();
+        if (response.ok && data.token) {
+          this.token = data.token;
+          localStorage.setItem('terminal-remote-token', this.token);
+          this.showAppScreen();
+          this.connect();
+          return;
+        }
+      } catch (e) {
+        console.log('URL API token auth failed:', e.message);
+      }
       this.showLoginScreen();
+    } else if (urlPin) {
+      // IDE embed: authenticate with PIN from URL
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pin: urlPin })
+        });
+        const data = await response.json();
+        if (response.ok && data.token) {
+          this.token = data.token;
+          localStorage.setItem('terminal-remote-token', this.token);
+          this.showAppScreen();
+          this.connect();
+          return;
+        }
+      } catch (e) {
+        console.log('URL PIN auth failed:', e.message);
+      }
+      this.showLoginScreen();
+    } else {
+      // Try auto-approve before showing login screen
+      const autoApproved = await this.tryAutoApprove();
+      if (autoApproved) {
+        this.showAppScreen();
+        this.connect();
+      } else {
+        this.showLoginScreen();
+      }
     }
   }
 
@@ -1312,10 +1415,16 @@ class TerminalRemoteApp {
     this.hideLoginError();
 
     try {
+      const trustDevice = document.getElementById('trust-device-checkbox');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin })
+        body: JSON.stringify({
+          pin,
+          trustDevice: trustDevice?.checked || false,
+          deviceFingerprint: this.getDeviceFingerprint(),
+          deviceName: this.getDeviceName()
+        })
       });
 
       const data = await response.json();

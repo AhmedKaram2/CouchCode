@@ -58,6 +58,18 @@
         "command": "couchcode.openInBrowser",
         "title": "CouchCode: Open in Browser",
         "icon": "$(browser)"
+      },
+      {
+        "command": "couchcode.openNativeTerminal",
+        "title": "CouchCode: Open Native Remote Terminal",
+        "icon": "$(terminal)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "couchcode.openPanel",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c"
       }
     ],
     "menus": {
@@ -103,17 +115,37 @@
         "couchcode.serverUrl": {
           "type": "string",
           "default": "http://localhost:3847",
-          "description": "CouchCode server URL"
+          "description": "CouchCode server URL (e.g., http://192.168.1.100:3847)"
         },
         "couchcode.autoConnect": {
           "type": "boolean",
-          "default": false,
-          "description": "Automatically connect to server on startup"
+          "default": true,
+          "description": "Automatically connect to CouchCode server on startup"
         },
         "couchcode.pin": {
           "type": "string",
           "default": "",
-          "description": "PIN for authentication (leave empty to be prompted)"
+          "description": "PIN for authentication (leave empty to use API token or auto-approve)"
+        },
+        "couchcode.apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "API token for authentication (generate in CouchCode Settings > IDE Integration)"
+        },
+        "couchcode.autoApprove": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use auto-approve for localhost connections (no PIN needed)"
+        },
+        "couchcode.showInStatusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show CouchCode connection status in the status bar"
+        },
+        "couchcode.reconnectOnFailure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically reconnect when connection is lost"
         }
       }
     }

@@ -548,6 +548,64 @@ ipcMain.handle('install-tmux', async () => {
   });
 });
 
+// ==================== AUTO-APPROVE & IDE INTEGRATION ====================
+
+// Get auto-approve settings
+ipcMain.handle('get-auto-approve-settings', () => {
+  return {
+    enabled: config.getAutoApproveEnabled(),
+    localhostAutoApprove: config.getAutoApproveLocalhost(),
+    expiryDays: config.getAutoApproveExpiry(),
+    trustedDevices: config.getTrustedDevices(),
+    apiTokens: config.getApiTokens().map(t => ({
+      id: t.id, name: t.name, createdAt: t.createdAt, scope: t.scope,
+      tokenPreview: t.token.substring(0, 8) + '...'
+    }))
+  };
+});
+
+// Toggle auto-approve
+ipcMain.handle('toggle-auto-approve', (event, enabled) => {
+  config.setAutoApproveEnabled(enabled);
+  return { success: true, enabled };
+});
+
+// Toggle localhost auto-approve
+ipcMain.handle('toggle-localhost-auto-approve', (event, enabled) => {
+  config.setAutoApproveLocalhost(enabled);
+  return { success: true, enabled };
+});
+
+// Set auto-approve expiry
+ipcMain.handle('set-auto-approve-expiry', (event, days) => {
+  config.setAutoApproveExpiry(days);
+  return { success: true, days: config.getAutoApproveExpiry() };
+});
+
+// Remove trusted device
+ipcMain.handle('remove-trusted-device', (event, fingerprint) => {
+  config.removeTrustedDevice(fingerprint);
+  return { success: true };
+});
+
+// Clear all trusted devices
+ipcMain.handle('clear-trusted-devices', () => {
+  config.clearTrustedDevices();
+  return { success: true };
+});
+
+// Create API token (for IDE integration)
+ipcMain.handle('create-api-token', (event, name, scope) => {
+  const token = config.createApiToken(name, scope);
+  return token;
+});
+
+// Revoke API token
+ipcMain.handle('revoke-api-token', (event, id) => {
+  config.revokeApiToken(id);
+  return { success: true };
+});
+
 // Forward PTY output to renderer
 ptyManager.on('output', (sessionId, data) => {
   if (mainWindow && !mainWindow.isDestroyed()) {
